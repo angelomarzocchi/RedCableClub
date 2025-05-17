@@ -13,6 +13,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,7 +30,7 @@ import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationType
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppScreen(
-    windowSize: WindowWidthSizeClass,
+    windowSize: WindowSizeClass,
     modifier: Modifier = Modifier
 ) {
     val navigationType: RedCableClubNavigationType = getNavigationTypeByWindowSize(windowSize)
@@ -63,11 +65,14 @@ fun AppScreen(
     }
 }
 
-private fun getNavigationTypeByWindowSize(windowSize: WindowWidthSizeClass): RedCableClubNavigationType {
-    return when(windowSize) {
-        WindowWidthSizeClass.Compact -> RedCableClubNavigationType.BOTTOM_NAVIGATION
-        WindowWidthSizeClass.Medium -> RedCableClubNavigationType.NAVIGATION_RAIL
-        WindowWidthSizeClass.Expanded -> RedCableClubNavigationType.PERMANENT_NAVIGATION_DRAWER
-        else -> RedCableClubNavigationType.BOTTOM_NAVIGATION
+private fun getNavigationTypeByWindowSize(windowSize: WindowSizeClass): RedCableClubNavigationType {
+    val widthSize = windowSize.widthSizeClass
+    val heightSize = windowSize.heightSizeClass
+    return if(widthSize == WindowWidthSizeClass.Compact){
+        RedCableClubNavigationType.BOTTOM_NAVIGATION
+    } else if(widthSize == WindowWidthSizeClass.Medium || heightSize != WindowHeightSizeClass.Expanded){
+        RedCableClubNavigationType.NAVIGATION_RAIL
+    } else {
+        RedCableClubNavigationType.PERMANENT_NAVIGATION_DRAWER
     }
 }
