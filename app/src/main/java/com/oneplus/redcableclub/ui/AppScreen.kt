@@ -31,29 +31,14 @@ fun AppScreen(
     windowSize: WindowWidthSizeClass,
     modifier: Modifier = Modifier
 ) {
-    val navigationType: RedCableClubNavigationType
+    val navigationType: RedCableClubNavigationType = getNavigationTypeByWindowSize(windowSize)
 
-    when(windowSize) {
-        WindowWidthSizeClass.Compact -> {
-            navigationType = RedCableClubNavigationType.BOTTOM_NAVIGATION
-        }
 
-        WindowWidthSizeClass.Medium -> {
-            navigationType = RedCableClubNavigationType.NAVIGATION_RAIL
-        }
-
-        WindowWidthSizeClass.Expanded -> {
-            navigationType = RedCableClubNavigationType.PERMANENT_NAVIGATION_DRAWER
-        }
-        else -> {
-            navigationType = RedCableClubNavigationType.BOTTOM_NAVIGATION
-        }
-    }
 
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
 
             TopAppBar(
@@ -75,5 +60,14 @@ fun AppScreen(
         }
     ) { innerPadding ->
         RedCableClub(paddingValues = innerPadding)
+    }
+}
+
+private fun getNavigationTypeByWindowSize(windowSize: WindowWidthSizeClass): RedCableClubNavigationType {
+    return when(windowSize) {
+        WindowWidthSizeClass.Compact -> RedCableClubNavigationType.BOTTOM_NAVIGATION
+        WindowWidthSizeClass.Medium -> RedCableClubNavigationType.NAVIGATION_RAIL
+        WindowWidthSizeClass.Expanded -> RedCableClubNavigationType.PERMANENT_NAVIGATION_DRAWER
+        else -> RedCableClubNavigationType.BOTTOM_NAVIGATION
     }
 }
