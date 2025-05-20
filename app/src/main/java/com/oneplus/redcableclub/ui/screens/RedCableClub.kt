@@ -1,17 +1,17 @@
 package com.oneplus.redcableclub.ui.screens
+
 import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -39,35 +39,25 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathMeasure
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
@@ -78,25 +68,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.min
-import androidx.core.content.getSystemService
-
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.oneplus.redcableclub.R
-import com.oneplus.redcableclub.data.FakeAdRepository
-import com.oneplus.redcableclub.data.FakeUserProfileRepository
 import com.oneplus.redcableclub.data.model.Achievement
 import com.oneplus.redcableclub.data.model.Ad
 import com.oneplus.redcableclub.data.model.Coupon
 import com.oneplus.redcableclub.data.model.MembershipTier
 import com.oneplus.redcableclub.data.model.UserProfile
+import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.navigation.NavigationDestination
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
 import com.oneplus.redcableclub.ui.theme.gold
-import kotlin.io.path.moveTo
-import kotlin.math.PI
+import com.oneplus.redcableclub.ui.utils.ResourceState
+import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
 import kotlin.math.absoluteValue
-import kotlin.math.atan2
 import kotlin.math.sin
 
 object RedCableClubDestination: NavigationDestination {
@@ -105,6 +92,7 @@ object RedCableClubDestination: NavigationDestination {
 
 @Composable
 fun RedCableClub(
+    uiState: RedCableClubUiState,
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     ) {
@@ -120,22 +108,77 @@ fun RedCableClub(
             .verticalScroll(scrollState)
 
     ) {
-        ProfileCard(profile = FakeUserProfileRepository().fakeUserProfile)
+
+        val userProfileUiState = uiState.userProfileState
+        when(userProfileUiState) {
+            is ResourceState.Loading -> ProfileCardSkeleton()
+            is ResourceState.Error -> ProfileCardError()
+            is ResourceState.Success -> {
+                ProfileCard(
+                    profile = userProfileUiState.data
+                )
+            }
+        }
+
+
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
 
         Text(text = stringResource(R.string.offers), style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
-        AdCarousel(ads = FakeAdRepository().ads)
+       // AdCarousel(ads = FakeAdRepository().ads)
 
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
 
         Text(text = stringResource(R.string.discover), style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
-        DiscoverPostCarousel(
+      /*  DiscoverPostCarousel(
             posts = FakeAdRepository().discoverPosts,
             bottomPadding = paddingValues.calculateBottomPadding(),
         )
 
+       */
+
+    }
+}
+
+@Composable
+fun ProfileCardError(modifier: Modifier = Modifier) {
+    Card(modifier = modifier) {
+        Text(text = "Error")
+    }
+}
+
+@Composable
+fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier
+    ) {
+        Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))) {
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ProfileImageSkeleton()
+                Column(
+                    verticalArrangement = Arrangement.SpaceAround,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(3f)
+                ) {
+
+                    Box(
+                        modifier = Modifier
+                            .height(dimensionResource(R.dimen.profile_image_size) -  dimensionResource(R.dimen.badge_size) -  dimensionResource(R.dimen.padding_small))
+                            .fillMaxWidth()
+                            .padding(bottom =dimensionResource(R.dimen.padding_small), start = dimensionResource(R.dimen.padding_small), end = dimensionResource( R.dimen.padding_small))
+                            .clip(RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small))))
+                            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                            .shimmerLoadingAnimation()
+                    )
+                        BadgesRowSkeleton()
+
+                }
+            }
+        }
     }
 }
 
@@ -152,7 +195,7 @@ fun ProfileCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ProfileImage(
-                    imageResourceId = profile.profilePicture,
+                    imageUrl =  profile.profilePictureUrl ,
                     modifier = Modifier.size(dimensionResource(R.dimen.profile_image_size))
                 )
                 Column(
@@ -161,11 +204,13 @@ fun ProfileCard(
                     modifier = Modifier.weight(3f)
                 ) {
                     Text(
-                        text = profile.username,
+                        text =  profile.username ,
                         style = MaterialTheme.typography.headlineLarge,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
                     )
-                    BadgesRow(achievements = profile.achievements)
+                    BadgesRow(
+                        achievements = profile.achievements
+                    )
 
                 }
             }
@@ -178,15 +223,18 @@ fun ProfileCard(
                     painter = painterResource(id = R.drawable.cake_icon),
                     contentDescription = null)
                 Text(
-                    text = stringResource(R.string.birthday, profile.birthday),
+                    text = stringResource(R.string.birthday,  profile.birthday ),
                     style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+
                 )
             }
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
             MembershipTierProgress(points = profile.redExpPoints)
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
-            CouponHorizontalList(coupons = profile.wallet)
+            CouponHorizontalList(
+                coupons = profile.wallet
+            )
 
 
         }
@@ -242,7 +290,7 @@ fun <T> Carousel(
         vibratorManager.defaultVibrator
     } else {
         @Suppress("DEPRECATION")
-        context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as Vibrator
+        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
     // 1. Use a very large number for the virtual page count
     val virtualCount = Int.MAX_VALUE
@@ -449,12 +497,15 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxSize() // Box fills the Card
         ) {
             // Image fills the Box and is squared
+            /*
             Image(
-                painter = painterResource(id = post.adImageId),
+                painter = painterResource(id = post.adImageUrl),
                 contentDescription = post.description,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
+
+             */
 
             // Text overlay
             Box(
@@ -478,16 +529,21 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
 
 
 
+
+
 @Composable
 fun AdCard(ad: Ad, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier) {
+        /*
         Image(
             painter = painterResource(id = ad.adImageId),
             contentDescription = ad.description,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxWidth()
         )
+
+         */
         Text(text = ad.description, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)))
     }
 
@@ -499,8 +555,11 @@ fun CouponHorizontalList(coupons: List<Coupon>,modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
         modifier = modifier.padding(dimensionResource(R.dimen.padding_small))
     ) {
+
         items(coupons.size) { index ->
-            CouponElement(coupon = coupons[index])
+            CouponElement(
+                coupon = coupons[index]
+            )
         }
     }
 }
@@ -642,20 +701,69 @@ fun MembershipTierProgress(
 }
 
 
+@Composable
+fun BadgesRowSkeleton(size: Dp = dimensionResource(R.dimen.badge_size),spacing: Dp = dimensionResource(R.dimen.padding_small), modifier: Modifier = Modifier) {
+    Row(horizontalArrangement = Arrangement.spacedBy(
+        space = spacing,
+        alignment = Alignment.CenterHorizontally
+    ), verticalAlignment = Alignment.CenterVertically, modifier = modifier)  {
+        repeat(3) {
+            Box(
+                modifier =
+                    Modifier.size(size)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        .shimmerLoadingAnimation()
 
+            )
+        }
+        FilledIconButton(onClick = { /*TODO*/ }, enabled = false) {
+            Icon(imageVector =Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+        }
+    }
+}
 
 
 
 @Composable
-fun BadgesRow(achievements: List<Achievement>, size: Dp = dimensionResource(R.dimen.badge_size), modifier: Modifier = Modifier) {
-    Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
-        for( achievement in achievements.take(3)) {
-            Image(
-                painter = painterResource(id = achievement.icon),
-                contentDescription = achievement.name,
-                modifier = Modifier
-                    .size(size)
+fun BadgesRow(achievements: List<Achievement>, size: Dp = dimensionResource(R.dimen.badge_size),spacing: Dp = dimensionResource(R.dimen.padding_small), modifier: Modifier = Modifier) {
+    Row(horizontalArrangement = Arrangement.spacedBy(
+        space = spacing,
+        alignment = Alignment.CenterHorizontally
+    ), verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
 
+
+        for( achievement in achievements.take(3)) {
+
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(achievement.iconUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = stringResource(R.string.profile_image),
+                modifier = Modifier.size(size),
+                loading = {
+                    Box(
+                        modifier = Modifier
+                            .size(size)
+                            .shimmerLoadingAnimation()
+                    )
+                },
+                error = {
+                    Box(
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.surfaceVariant), // Simple background for error
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Clear,
+                            contentDescription = "Image loading failed",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .size(size)
+                        )
+                    }
+                }
             )
         }
         FilledIconButton(onClick = { /*TODO*/ }) {
@@ -667,24 +775,68 @@ fun BadgesRow(achievements: List<Achievement>, size: Dp = dimensionResource(R.di
 }
 
 @Composable
-fun ProfileImage(
-    imageResourceId: Int,
-    borderWidth: Dp = dimensionResource(R.dimen.padding_extra_small),
-    borderColor: Color = MaterialTheme.colorScheme.secondary,
-    modifier: Modifier = Modifier
-) {
-    val imageModifier = modifier
-        .clip(CircleShape)
-        .border(borderWidth, borderColor, CircleShape)
+fun Modifier.profileImageModifier(
+    size: Dp = dimensionResource(R.dimen.profile_image_size),
+     borderWidth: Dp = dimensionResource(R.dimen.padding_extra_small),
+    borderColor: Color = MaterialTheme.colorScheme.secondary): Modifier {
+    return this.size(size).clip(CircleShape).border(borderWidth, borderColor, CircleShape)
+}
 
-    Image(
-        painter = painterResource(id = imageResourceId),
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        modifier = imageModifier
+@Composable
+fun ProfileImageSkeleton(
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.profileImageModifier()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .shimmerLoadingAnimation(isLoading = true) // Apply shimmer
     )
 }
 
+
+
+@Composable
+fun ProfileImage(
+    imageUrl: String?,
+    modifier: Modifier = Modifier
+) {
+
+
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(imageUrl)
+            .crossfade(true)
+            .build(),
+        contentDescription = stringResource(R.string.profile_image),
+    modifier = modifier.profileImageModifier(),
+        loading = {
+            Box(
+                modifier = modifier.profileImageModifier()
+                    .shimmerLoadingAnimation()
+            )
+        },
+        error = {errorState ->
+            Log.e("ProfileImageError", "Image loading failed for URL: $imageUrl", errorState.result.throwable)
+
+            Box(
+                modifier = modifier.profileImageModifier()
+                    .background(MaterialTheme.colorScheme.surfaceVariant), // Simple background for error
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Clear,
+                    contentDescription = "Image loading failed",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                     // Adjust icon size
+                )
+            }
+        }
+    )
+
+
+}
+
+/*
 @Preview
 @Composable
 fun RedCableClubPreview() {
@@ -717,6 +869,9 @@ fun DiscoverCarouselPreview() {
     }
 }
 
+ */
+
+/*
 @Preview
 @Composable
 fun DiscoverCardPreview() {
@@ -755,10 +910,29 @@ fun ProfileImagePreview() {
     }
 }
 
+ */
+
 @Preview
 @Composable
 fun ProfileCardPreview() {
     RedCableClubTheme(dynamicColor = false, darkTheme = true) {
-        ProfileCard(profile = FakeUserProfileRepository().fakeUserProfile)
+        ProfileCard(profile = RedCableClubApiServiceMock.userMock)
     }
+}
+
+@Preview
+@Composable
+fun ProfileCardPreviewLight() {
+    RedCableClubTheme(dynamicColor = false) {
+        ProfileCard(profile = RedCableClubApiServiceMock.userMock)
+    }
+}
+
+@Preview
+@Composable
+fun ProfileCardLoadingPreview() {
+    RedCableClubTheme(dynamicColor = false) {
+        ProfileCardSkeleton()
+    }
+
 }

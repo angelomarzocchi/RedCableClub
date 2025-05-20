@@ -22,8 +22,6 @@ enum class MembershipTier(val label: String,val minPoints: Int, val maxPoints: I
                 MembershipTier.entries.indexOf(currentTier) + 1
             ) ?: SUPREME
 
-            val currentTierRange = currentTier.maxPoints - currentTier.minPoints
-
             val pointsToNextTier = nextTier.minPoints - points
 
             val progress = 1 - (pointsToNextTier.toFloat() / (nextTier.minPoints - currentTier.minPoints))

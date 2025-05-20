@@ -1,6 +1,6 @@
 package com.oneplus.redcableclub.data.model
 
-import androidx.annotation.DrawableRes
+
 import java.time.LocalDate
 
 data class UserProfile(
@@ -8,7 +8,7 @@ data class UserProfile(
     val firstName: String,
     val lastName: String,
     val birthday: LocalDate,
-    @DrawableRes val profilePicture: Int,
+    val profilePictureUrl: String,
     val email: String,
     val redExpPoints: Int,
     val redCoins: Int,

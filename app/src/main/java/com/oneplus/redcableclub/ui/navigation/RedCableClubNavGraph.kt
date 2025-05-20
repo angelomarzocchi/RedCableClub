@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.oneplus.redcableclub.ui.screens.RedCableClub
 import com.oneplus.redcableclub.ui.screens.RedCableClubDestination
 
 
@@ -22,9 +21,7 @@ fun RedCableClubNavHost(
         modifier = modifier
     ) {
         composable(route = RedCableClubDestination.route) {
-            RedCableClub(
-                paddingValues = paddingValues
-            )
+
         }
     }
 }
