@@ -1,21 +1,15 @@
 package com.oneplus.redcableclub.network
 
-import android.content.Context
 import com.oneplus.redcableclub.data.model.Achievement
 import com.oneplus.redcableclub.data.model.Ad
 import com.oneplus.redcableclub.data.model.CouponFactory
 import com.oneplus.redcableclub.data.model.Device
 import com.oneplus.redcableclub.data.model.ProductCategory
 import com.oneplus.redcableclub.data.model.UserProfile
+import kotlinx.coroutines.delay
 import java.time.LocalDate
 
-class RedCableClubApiServiceMock(private val context: Context): RedCableClubApiService {
-
-    private val packageName = context.packageName
-
-    private fun getDrawableUri(drawableName: String): String {
-        return "android.resource://$packageName/drawable/$drawableName"
-    }
+class RedCableClubApiServiceMock(): RedCableClubApiService {
 
     companion object {
         val userMock = UserProfile(
@@ -86,23 +80,28 @@ class RedCableClubApiServiceMock(private val context: Context): RedCableClubApiS
         }
     }
 
+    private val defaultDelayMills = 1500L
+
     override suspend fun getAds(): List<Ad> {
+        delay(defaultDelayMills)
         return listOf<Ad>(
-            Ad("Save €100 (16GB only), plus get 2 free gifts worth up to €104",getDrawableUri("oneplus_13_ad")),
-            Ad("Save €50, plus get a free gift worth up to €49",getDrawableUri("oneplus_13r_ad")),
-            Ad("Save €50, plus get FREE earbuds worth up to €79 (Limited stock)",getDrawableUri("oneplus_watch_3_ad"))
+            Ad("Save €100 (16GB only), plus get 2 free gifts worth up to €104",getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_13_ad)),
+            Ad("Save €50, plus get a free gift worth up to €49",getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_13r_ad)),
+            Ad("Save €50, plus get FREE earbuds worth up to €79 (Limited stock)",getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_watch_3_ad))
         )
     }
 
     override suspend fun getDiscoverPosts(): List<Ad> {
+        delay(defaultDelayMills + 500L)
         return listOf<Ad>(
-            Ad("Shot on OnePlus: Faces", getDrawableUri("drawable.faces")),
-            Ad("Flex your Flux", getDrawableUri("flux")),
-            Ad("Plus Key", getDrawableUri("plus"))
+            Ad("Shot on OnePlus: Faces", getDrawableUri(com.oneplus.redcableclub.R.drawable.faces)),
+            Ad("Flex your Flux", getDrawableUri(com.oneplus.redcableclub.R.drawable.flux)),
+            Ad("Plus Key", getDrawableUri(com.oneplus.redcableclub.R.drawable.plus))
         )
     }
 
     override suspend fun getUserProfile(username: String): UserProfile {
+        delay(defaultDelayMills - 500L)
         return userMock
     }
 

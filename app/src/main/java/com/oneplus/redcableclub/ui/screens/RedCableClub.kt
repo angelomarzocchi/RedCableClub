@@ -1,16 +1,13 @@
 package com.oneplus.redcableclub.ui.screens
 
-import android.content.Context
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.util.Log
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,6 +46,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -58,8 +58,11 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -97,6 +100,38 @@ fun RedCableClub(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     ) {
     val scrollState = rememberScrollState()
+    val hapticFeedback = LocalHapticFeedback.current
+    var atTopBoundary by remember { mutableStateOf(!scrollState.canScrollBackward) }
+    var atBottomBoundary by remember(scrollState.maxValue) {
+        mutableStateOf(scrollState.maxValue > 0 && !scrollState.canScrollForward)
+    }
+
+    LaunchedEffect(
+        scrollState.canScrollBackward,
+        scrollState.canScrollForward,
+        scrollState.maxValue
+    ) {
+        val isScrollable = scrollState.maxValue > 0
+        val currentlyAtTop = !scrollState.canScrollBackward
+        val currentlyAtBottom = isScrollable && !scrollState.canScrollForward
+        // User scrolled to top
+        if (currentlyAtTop && !atTopBoundary) {
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        }
+        atTopBoundary = currentlyAtTop // Update the state for the next evaluation
+
+        // User scrolled to bottom (only if scrollable)
+        if (isScrollable) {
+            if (currentlyAtBottom && !atBottomBoundary) {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            }
+            atBottomBoundary = currentlyAtBottom // Update state
+        } else {
+            // If not scrollable, it cannot be at a "bottom scroll boundary"
+            atBottomBoundary = false
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -110,33 +145,59 @@ fun RedCableClub(
     ) {
 
         val userProfileUiState = uiState.userProfileState
-        when(userProfileUiState) {
-            is ResourceState.Loading -> ProfileCardSkeleton()
-            is ResourceState.Error -> ProfileCardError()
-            is ResourceState.Success -> {
-                ProfileCard(
-                    profile = userProfileUiState.data
-                )
+        Crossfade(
+            targetState = userProfileUiState,
+            animationSpec = tween(durationMillis = 500),
+
+        ) {state ->
+            when(state) {
+                is ResourceState.Loading -> ProfileCardSkeleton()
+                is ResourceState.Error -> ProfileCardError()
+                is ResourceState.Success -> {
+                    ProfileCard(
+                        profile = state.data
+                    )
+                }
             }
         }
+
 
 
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
 
         Text(text = stringResource(R.string.offers), style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
-       // AdCarousel(ads = FakeAdRepository().ads)
+        val adsUiState = uiState.adsState
+        Crossfade(
+            targetState = adsUiState,
+            animationSpec = tween(durationMillis = 500)
+        ) {state ->
+            when(state) {
+                is ResourceState.Loading -> SkeletonCarousel()
+                is ResourceState.Error -> Text(text = "Error")
+                is ResourceState.Success<List<Ad>> -> AdCarousel(ads = state.data)
+            }
+        }
 
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
 
         Text(text = stringResource(R.string.discover), style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
-      /*  DiscoverPostCarousel(
-            posts = FakeAdRepository().discoverPosts,
-            bottomPadding = paddingValues.calculateBottomPadding(),
-        )
+        val discoverUiState = uiState.discoveryState
+        Crossfade(
+            targetState = discoverUiState,
+            animationSpec = tween(durationMillis = 500)
+        ) {state ->
+            when(state) {
+                is ResourceState.Loading -> SkeletonCarousel()
+                is ResourceState.Error -> Text(text = "Error")
+                is ResourceState.Success<List<Ad>> -> DiscoverPostCarousel(
+                    posts = state.data,
+                    bottomPadding = paddingValues.calculateBottomPadding()
+                )
+            }
+        }
 
-       */
 
     }
 }
@@ -178,6 +239,31 @@ fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
 
                 }
             }
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.cake_icon),
+                    contentDescription = null)
+                Text(
+                    text = "dd-mm-yyyy",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = Color.Transparent,
+                    modifier = Modifier.
+                        background(
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            shape = RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small)))
+                        ).
+                            shimmerLoadingAnimation()
+                    )
+            }
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
+            MembershipTierProgress(points = 0)
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
+            CouponHorizontalListSkeleton()
         }
     }
 }
@@ -242,6 +328,20 @@ fun ProfileCard(
 }
 
 
+@Composable
+fun SkeletonCarousel(
+    itemSpacing: Dp = dimensionResource(R.dimen.padding_small),
+    modifier: Modifier = Modifier,
+    bottomPadding: Dp = 0.dp
+) {
+    Carousel(
+        items = listOf<Any>(""),
+        itemContent = { CarouselItemSkeleton(item = it) },
+        itemSpacing = itemSpacing,
+        bottomPadding = bottomPadding,
+        modifier = modifier
+    )
+}
 
 
 
@@ -284,31 +384,27 @@ fun <T> Carousel(
     bottomPadding:Dp = 0.dp,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        vibratorManager.defaultVibrator
-    } else {
-        @Suppress("DEPRECATION")
-        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-    }
+
+    val hapticFeedback = LocalHapticFeedback.current
+
+    val itemsSize = items.size.coerceAtLeast(1)
     // 1. Use a very large number for the virtual page count
     val virtualCount = Int.MAX_VALUE
 
     // 2. Calculate a starting page in the middle of the virtual range
     //    that maps correctly to the first actual item (index 0).
-    val startPage = (virtualCount / 2) - ((virtualCount / 2).mod(items.size))
+    val startPage = (virtualCount / 2) - ((virtualCount / 2).mod(itemsSize))
 
     // 3. Remember PagerState with the virtual count and calculated start page
     val pagerState = rememberPagerState(
         initialPage = startPage,
         pageCount = { virtualCount }
     )
-    val pattern = longArrayOf(20,30,20)
+
 
     LaunchedEffect(pagerState.settledPage) {
         if (pagerState.currentPage == pagerState.settledPage) {
-            vibrator.vibrate(VibrationEffect.createWaveform(pattern,-1))
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
 
         }
     }
@@ -324,7 +420,7 @@ fun <T> Carousel(
             pageSpacing = itemSpacing
         ) { virtualPageIndex ->
 
-            val actualIndex = virtualPageIndex.mod(items.size)
+            val actualIndex = virtualPageIndex.mod(itemsSize)
             val pageOffset =
                 (pagerState.currentPage - virtualPageIndex) + pagerState.currentPageOffsetFraction
             val scale by animateFloatAsState(
@@ -354,18 +450,10 @@ fun <T> Carousel(
             }
         }
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
-       /* CarouselIndicator(
-            items.size,
-            pagerState.currentPage.mod(items.size),
-            modifier = Modifier.padding(
-                bottom = bottomPadding
-            )
-        )
 
-        */
         DynamicCarouselIndicator(
-            size = items.size,
-            currentPage = pagerState.currentPage.mod(items.size),
+            size = itemsSize,
+            currentPage = pagerState.currentPage.mod(itemsSize),
             modifier = Modifier.padding(
                 bottom = bottomPadding
             )
@@ -374,27 +462,7 @@ fun <T> Carousel(
 }
 
 
-@Composable
-fun CarouselIndicator(size: Int, currentPage: Int, modifier: Modifier = Modifier) {
-    Row(
-        modifier
-            .wrapContentHeight()
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        repeat(size) { iteration ->
-            val color =
-                if (currentPage == iteration) MaterialTheme.colorScheme.primary else Color.LightGray
-            Box(
-                modifier = Modifier
-                    .padding(dimensionResource(R.dimen.padding_mini))
-                    .clip(CircleShape)
-                    .background(color)
-                    .size(dimensionResource(R.dimen.height_medium))
-            )
-        }
-    }
-}
+
 
 @Composable
 fun DynamicCarouselIndicator(
@@ -406,8 +474,6 @@ fun DynamicCarouselIndicator(
     inactiveColor: Color = Color.LightGray,
     indicatorSize: Dp = 8.dp,
     indicatorPadding: Dp = 4.dp,
-    ellipsisText: String = "...",
-    ellipsisColor: Color = Color.Gray
 ) {
     Row(
         modifier = modifier
@@ -458,7 +524,7 @@ fun DynamicCarouselIndicator(
                     stiffness = Spring.StiffnessLow
                 )
             )
-            val color = if (currentPage == i) activeColor else inactiveColor
+
             Box(
                 modifier = Modifier
                     .padding(horizontal = indicatorPadding)
@@ -496,16 +562,38 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
         Box(
             modifier = Modifier.fillMaxSize() // Box fills the Card
         ) {
-            // Image fills the Box and is squared
-            /*
-            Image(
-                painter = painterResource(id = post.adImageUrl),
+
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(post.adImageUrl)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = post.description,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
+                modifier = modifier.fillMaxSize(),
+                loading = {
+                    Box(
+                        modifier = modifier.profileImageModifier()
+                            .shimmerLoadingAnimation()
+                    )
+                },
+                error = {errorState ->
+                    Log.e("ProfileImageError", "Image loading failed for URL: ${post.adImageUrl}", errorState.result.throwable)
 
-             */
+                    Box(
+                        modifier = modifier.profileImageModifier()
+                            .background(MaterialTheme.colorScheme.surfaceVariant), // Simple background for error
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Clear,
+                            contentDescription = "Image loading failed",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            // Adjust icon size
+                        )
+                    }
+                }
+            )
 
             // Text overlay
             Box(
@@ -528,6 +616,30 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
 }
 
 
+@Composable
+fun CarouselItemSkeleton(
+    item: Any,
+    modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth()
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small)))
+                )
+                .fillMaxSize()
+                .shimmerLoadingAnimation()
+        )
+        Text(
+            text = "Loading...",
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.Transparent,
+            modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
+        )
+    }
+}
 
 
 
@@ -544,9 +656,53 @@ fun AdCard(ad: Ad, modifier: Modifier = Modifier) {
         )
 
          */
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(ad.adImageUrl)
+                .crossfade(true)
+                .build(),
+            contentDescription = ad.description,
+            contentScale = ContentScale.Crop,
+            modifier = modifier.fillMaxWidth(),
+            loading = {
+                Box(
+                    modifier = modifier.profileImageModifier()
+                        .shimmerLoadingAnimation()
+                )
+            },
+            error = {errorState ->
+                Log.e("ProfileImageError", "Image loading failed for URL: $ad.adImageUrl", errorState.result.throwable)
+
+                Box(
+                    modifier = modifier.profileImageModifier()
+                        .background(MaterialTheme.colorScheme.surfaceVariant), // Simple background for error
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Clear,
+                        contentDescription = "Image loading failed",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxSize()
+                        // Adjust icon size
+                    )
+                }
+            }
+        )
         Text(text = ad.description, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)))
     }
 
+}
+
+@Composable
+fun CouponHorizontalListSkeleton(modifier: Modifier = Modifier) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+        modifier = modifier.padding(dimensionResource(R.dimen.padding_small))
+    ) {
+        items(3) {
+            CouponElementSkeleton()
+        }
+    }
 }
 
 @Composable
@@ -557,10 +713,56 @@ fun CouponHorizontalList(coupons: List<Coupon>,modifier: Modifier = Modifier) {
     ) {
 
         items(coupons.size) { index ->
-            CouponElement(
-                coupon = coupons[index]
+            CouponElement(coupon = coupons[index])
+        }
+    }
+}
+
+@Composable
+fun CouponElementSkeleton(
+    borderColor: Color = MaterialTheme.colorScheme.gold,
+    borderWidth: Dp = dimensionResource(R.dimen.padding_mini),
+    paddingAroundIcon: Dp = dimensionResource(R.dimen.padding_small),
+    iconSize: Dp = dimensionResource(R.dimen.coupon_size),
+    modifier: Modifier = Modifier
+) {
+
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.width(iconSize * 1.5f)) {
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(iconSize)
+                .border(
+                    width = borderWidth,
+                    color = borderColor,
+                    shape = CircleShape
+                )
+                .padding(paddingAroundIcon)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(iconSize)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        shape = CircleShape
+                    )
+                    .shimmerLoadingAnimation()
             )
         }
+        Text(
+            text = "Coupons are loading...",
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.Transparent,
+            modifier = Modifier.widthIn(max = iconSize * 1.5f)
+
+        )
+
     }
 }
 
