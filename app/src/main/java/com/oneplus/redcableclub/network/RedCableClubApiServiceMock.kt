@@ -75,6 +75,18 @@ class RedCableClubApiServiceMock(): RedCableClubApiService {
             )
         )
 
+        val discoverPosts = listOf<Ad>(
+            Ad("Shot on OnePlus: Faces", getDrawableUri(com.oneplus.redcableclub.R.drawable.faces)),
+            Ad("Flex your Flux", getDrawableUri(com.oneplus.redcableclub.R.drawable.flux)),
+            Ad("Plus Key", getDrawableUri(com.oneplus.redcableclub.R.drawable.plus))
+        )
+
+        val ads = listOf<Ad>(
+            Ad("Save €100 (16GB only), plus get 2 free gifts worth up to €104",getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_13_ad)),
+            Ad("Save €50, plus get a free gift worth up to €49",getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_13r_ad)),
+            Ad("Save €50, plus get FREE earbuds worth up to €79 (Limited stock)",getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_watch_3_ad))
+        )
+
         private fun getDrawableUri(drawableName: Int): String {
             return "android.resource://com.oneplus.redcableclub/drawable/$drawableName"
         }
@@ -84,20 +96,12 @@ class RedCableClubApiServiceMock(): RedCableClubApiService {
 
     override suspend fun getAds(): List<Ad> {
         delay(defaultDelayMills)
-        return listOf<Ad>(
-            Ad("Save €100 (16GB only), plus get 2 free gifts worth up to €104",getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_13_ad)),
-            Ad("Save €50, plus get a free gift worth up to €49",getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_13r_ad)),
-            Ad("Save €50, plus get FREE earbuds worth up to €79 (Limited stock)",getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_watch_3_ad))
-        )
+        return ads
     }
 
     override suspend fun getDiscoverPosts(): List<Ad> {
         delay(defaultDelayMills + 500L)
-        return listOf<Ad>(
-            Ad("Shot on OnePlus: Faces", getDrawableUri(com.oneplus.redcableclub.R.drawable.faces)),
-            Ad("Flex your Flux", getDrawableUri(com.oneplus.redcableclub.R.drawable.flux)),
-            Ad("Plus Key", getDrawableUri(com.oneplus.redcableclub.R.drawable.plus))
-        )
+        return discoverPosts
     }
 
     override suspend fun getUserProfile(username: String): UserProfile {

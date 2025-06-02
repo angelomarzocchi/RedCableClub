@@ -42,10 +42,12 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -91,6 +93,8 @@ import kotlin.math.sin
 
 object RedCableClubDestination: NavigationDestination {
     override val route = "redcableclub"
+    override val labelStringId = R.string.app_name
+    override val iconId = R.drawable.ic_launcher_foreground
 }
 
 @Composable
@@ -136,9 +140,7 @@ fun RedCableClub(
         modifier = modifier
             .fillMaxWidth()
             .padding(
-                top = paddingValues.calculateTopPadding(),
-                start = dimensionResource(R.dimen.padding_small),
-                end = dimensionResource(R.dimen.padding_small)
+                top = paddingValues.calculateTopPadding()
             )
             .verticalScroll(scrollState)
 
@@ -151,11 +153,14 @@ fun RedCableClub(
 
         ) {state ->
             when(state) {
-                is ResourceState.Loading -> ProfileCardSkeleton()
+                is ResourceState.Loading -> ProfileCardSkeleton(
+                    modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_small), end = dimensionResource(R.dimen.padding_small))
+                )
                 is ResourceState.Error -> ProfileCardError()
                 is ResourceState.Success -> {
                     ProfileCard(
-                        profile = state.data
+                        profile = state.data,
+                        modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_small), end = dimensionResource(R.dimen.padding_small))
                     )
                 }
             }
@@ -219,7 +224,9 @@ fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ProfileImageSkeleton()
+                ProfileImageSkeleton(
+                    modifier = Modifier.size(dimensionResource(R.dimen.profile_image_size))
+                )
                 Column(
                     verticalArrangement = Arrangement.SpaceAround,
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -347,7 +354,7 @@ fun SkeletonCarousel(
 
 @Composable
 fun AdCarousel(ads: List<Ad>,
-               itemSpacing: Dp = dimensionResource(R.dimen.padding_small),
+               itemSpacing: Dp = 0.dp,
                modifier: Modifier = Modifier) {
     Carousel(
         items = ads,
@@ -369,7 +376,7 @@ fun DiscoverPostCarousel(
     Carousel(
         items = posts,
         itemContent = { DiscoverCard(post = it) },
-        itemSpacing = dimensionResource(R.dimen.padding_small),
+        itemSpacing = 0.dp,
         bottomPadding = bottomPadding,
         modifier = modifier
     )
@@ -415,7 +422,7 @@ fun <T> Carousel(
             state = pagerState,
             modifier = modifier
                 .fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = dimensionResource(R.dimen.padding_large) + itemSpacing / 2),
+            contentPadding = PaddingValues(horizontal = dimensionResource(R.dimen.carousel_base_padding) + itemSpacing / 2),
 
             pageSpacing = itemSpacing
         ) { virtualPageIndex ->
@@ -621,7 +628,7 @@ fun CarouselItemSkeleton(
     item: Any,
     modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier
+        modifier = modifier.aspectRatio(1.5f)
     ) {
         Box(
             modifier = Modifier.fillMaxWidth()
@@ -699,7 +706,7 @@ fun CouponHorizontalListSkeleton(modifier: Modifier = Modifier) {
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
         modifier = modifier.padding(dimensionResource(R.dimen.padding_small))
     ) {
-        items(3) {
+        items(5) {
             CouponElementSkeleton()
         }
     }
@@ -753,6 +760,7 @@ fun CouponElementSkeleton(
                     .shimmerLoadingAnimation()
             )
         }
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_extra_small)))
         Text(
             text = "Coupons are loading...",
             maxLines = 2,
@@ -760,6 +768,10 @@ fun CouponElementSkeleton(
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Transparent,
             modifier = Modifier.widthIn(max = iconSize * 1.5f)
+                .background(color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    shape = RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small)))
+                )
+                .shimmerLoadingAnimation()
 
         )
 
@@ -797,6 +809,7 @@ fun CouponElement(
                 tint = MaterialTheme.colorScheme.gold
             )
         }
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_extra_small)))
         Text(
             text = coupon.description,
             maxLines = 2,
@@ -815,12 +828,17 @@ fun MembershipTierProgress(
     cableThickness: Dp = 8.dp,
     twists: Int = 3,
     modifier: Modifier = Modifier) {
-    val progress = MembershipTier.computeProgressToNextTier(points)
-    // Animate the progress value
+    val actualProgress = remember(points) { MembershipTier.computeProgressToNextTier(points) }
+    var animationTarget by remember { mutableFloatStateOf(0f) }
+
+    LaunchedEffect(actualProgress) {
+        animationTarget = actualProgress
+    }
+
     val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        label = "progressAnimation"
-        // You can customize animation spec here (e.g., tween)
+        targetValue = animationTarget,
+        label = "progressAnimation",
+        animationSpec = tween(durationMillis = 800)
     )
 
 
@@ -1038,17 +1056,9 @@ fun ProfileImage(
 
 }
 
-/*
-@Preview
-@Composable
-fun RedCableClubPreview() {
-    RedCableClubTheme(dynamicColor = false) {
-        Surface {
-            RedCableClub(modifier = Modifier.padding(top = dimensionResource(R.dimen.padding_medium)))
-        }
-    }
-}
 
+
+/*
 @Preview
 @Composable
 fun AdCarouselPreview() {
@@ -1059,19 +1069,32 @@ fun AdCarouselPreview() {
     }
 }
 
+ */
+
+@Preview
+@Composable
+fun SkeletonCarouselPreview() {
+    RedCableClubTheme(dynamicColor = false) {
+        Surface {
+            SkeletonCarousel()
+        }
+    }
+}
+
+
 @Preview
 @Composable
 fun DiscoverCarouselPreview() {
     RedCableClubTheme(dynamicColor = false) {
         Surface {
             DiscoverPostCarousel(
-            posts = FakeAdRepository().discoverPosts
+            posts = RedCableClubApiServiceMock.discoverPosts
             )
         }
     }
 }
 
- */
+
 
 /*
 @Preview

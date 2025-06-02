@@ -13,6 +13,7 @@ import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -21,10 +22,11 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import com.oneplus.redcableclub.R
 import com.oneplus.redcableclub.ui.screens.RedCableClub
 import com.oneplus.redcableclub.ui.screens.RedCableClubViewModel
-import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationType
+import com.oneplus.redcableclub.ui.navigation.RedCableClubNavigationType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,12 +36,42 @@ fun AppScreen(
 ) {
     val navigationType: RedCableClubNavigationType = getNavigationTypeByWindowSize(windowSize)
     val redCableClubViewModel: RedCableClubViewModel = viewModel(factory = RedCableClubViewModel.Factory)
-    redCableClubViewModel.getUserProfile("AngeloMarzo")
+    LaunchedEffect(Unit) { // Keyed on Unit to run once, or on a userId if it can change
+        redCableClubViewModel.getUserProfile("AngeloMarzo")
+    }
     val uiState by redCableClubViewModel.uiState.collectAsState()
 
-
-
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val navController = rememberNavController()
+
+    val navigateToDestination: (String) -> Unit = {route->
+        navController.navigate(route) {
+            popUpTo(navController.graph.startDestinationId) {
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+   /* when(navigationType) {
+        RedCableClubNavigationType.BOTTOM_NAVIGATION -> /*TODO BottomNavigationBar(
+            navController = navController,
+            navigateToDestination = navigateToDestination
+        ) */
+        RedCableClubNavigationType.NAVIGATION_RAIL -> /* TODO NavigationRailBar(
+            navController = navController,
+            navigateToDestination = navigateToDestination
+        )
+       */
+        RedCableClubNavigationType.PERMANENT_NAVIGATION_DRAWER -> /*TODO PermanentNavigationBar(
+            navController = navController,
+            navigateToDestination = navigateToDestination
+        )*/
+
+
+    }*/
+
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
