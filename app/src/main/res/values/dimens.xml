@@ -8,9 +8,12 @@
     <dimen name="padding_medium">16dp</dimen>
     <dimen name="padding_large">32dp</dimen>
     <dimen name="carousel_base_padding">36dp</dimen>
+    <dimen name="top_bar_height">96dp</dimen>
     <dimen name="height_medium">16dp</dimen>
     <dimen name="profile_image_size">100dp</dimen>
     <dimen name="coupon_size">48dp</dimen>
     <dimen name="badge_size">52dp</dimen>
+    <dimen name="badge_size_large">84dp</dimen>
+    <dimen name="badge_size_extra_large">120dp</dimen>
     <dimen name="icon_size">16dp</dimen>
 </resources>

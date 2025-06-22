@@ -38,12 +38,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -61,6 +64,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -83,23 +87,45 @@ import com.oneplus.redcableclub.data.model.Coupon
 import com.oneplus.redcableclub.data.model.MembershipTier
 import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
-import com.oneplus.redcableclub.ui.navigation.NavigationDestination
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
 import com.oneplus.redcableclub.ui.theme.gold
+import com.oneplus.redcableclub.ui.utils.RedCableClubTopBar
 import com.oneplus.redcableclub.ui.utils.ResourceState
 import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
 import kotlin.math.absoluteValue
 import kotlin.math.sin
 
-object RedCableClubDestination: NavigationDestination {
-    override val route = "redcableclub"
-    override val labelStringId = R.string.app_name
-    override val iconId = R.drawable.ic_launcher_foreground
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RedCableClubScreen(
+    scrollBehavior: TopAppBarScrollBehavior,
+    onAchievementDetailClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    uiState: RedCableClubUiState
+) {
+    Scaffold(
+        modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar =
+            {
+                RedCableClubTopBar(
+                    textResource = R.string.app_name,
+                    scrollBehavior = scrollBehavior,
+                )
+            }
+    ) { innerPadding ->
+        RedCableClub(
+            uiState = uiState,
+            onAchievementDetailClick = onAchievementDetailClick,
+            paddingValues = innerPadding
+        )
+    }
 }
+
 
 @Composable
 fun RedCableClub(
     uiState: RedCableClubUiState,
+    onAchievementDetailClick: () -> Unit,
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     ) {
@@ -160,6 +186,7 @@ fun RedCableClub(
                 is ResourceState.Success -> {
                     ProfileCard(
                         profile = state.data,
+                        onAchievementDetailClick = onAchievementDetailClick,
                         modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_small), end = dimensionResource(R.dimen.padding_small))
                     )
                 }
@@ -170,7 +197,11 @@ fun RedCableClub(
 
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
 
-        Text(text = stringResource(R.string.offers), style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = stringResource(R.string.offers),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_small))
+        )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
         val adsUiState = uiState.adsState
         Crossfade(
@@ -186,7 +217,12 @@ fun RedCableClub(
 
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
 
-        Text(text = stringResource(R.string.discover), style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = stringResource(R.string.discover),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_small))
+
+        )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
         val discoverUiState = uiState.discoveryState
         Crossfade(
@@ -278,6 +314,7 @@ fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
 @Composable
 fun ProfileCard(
     profile: UserProfile,
+    onAchievementDetailClick: () -> Unit,
     modifier: Modifier = Modifier) {
     Card(
         modifier = modifier) {
@@ -302,7 +339,8 @@ fun ProfileCard(
                         textAlign = TextAlign.Center,
                     )
                     BadgesRow(
-                        achievements = profile.achievements
+                        achievements = profile.achievements,
+                        onAchievementDetailClick = onAchievementDetailClick,
                     )
 
                 }
@@ -371,8 +409,9 @@ fun AdCarousel(ads: List<Ad>,
 @Composable
 fun DiscoverPostCarousel(
     posts: List<Ad>,
+    modifier: Modifier = Modifier,
     bottomPadding: Dp = 0.dp,
-    modifier: Modifier = Modifier) {
+    ) {
     Carousel(
         items = posts,
         itemContent = { DiscoverCard(post = it) },
@@ -387,9 +426,9 @@ fun DiscoverPostCarousel(
 fun <T> Carousel(
     items: List<T>,
     itemContent: @Composable (item: T) -> Unit,
+    modifier: Modifier = Modifier,
     itemSpacing: Dp = dimensionResource(R.dimen.padding_small),
     bottomPadding:Dp = 0.dp,
-    modifier: Modifier = Modifier
 ) {
 
     val hapticFeedback = LocalHapticFeedback.current
@@ -670,7 +709,7 @@ fun AdCard(ad: Ad, modifier: Modifier = Modifier) {
                 .build(),
             contentDescription = ad.description,
             contentScale = ContentScale.Crop,
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth().aspectRatio(1.66f),
             loading = {
                 Box(
                     modifier = modifier.profileImageModifier()
@@ -946,7 +985,13 @@ fun BadgesRowSkeleton(size: Dp = dimensionResource(R.dimen.badge_size),spacing: 
 
 
 @Composable
-fun BadgesRow(achievements: List<Achievement>, size: Dp = dimensionResource(R.dimen.badge_size),spacing: Dp = dimensionResource(R.dimen.padding_small), modifier: Modifier = Modifier) {
+fun BadgesRow(
+    achievements: List<Achievement>,
+    onAchievementDetailClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = dimensionResource(R.dimen.badge_size),
+    spacing: Dp = dimensionResource(R.dimen.padding_small),
+    ) {
     Row(horizontalArrangement = Arrangement.spacedBy(
         space = spacing,
         alignment = Alignment.CenterHorizontally
@@ -986,7 +1031,7 @@ fun BadgesRow(achievements: List<Achievement>, size: Dp = dimensionResource(R.di
                 }
             )
         }
-        FilledIconButton(onClick = { /*TODO*/ }) {
+        FilledIconButton(onClick = onAchievementDetailClick) {
             Icon(imageVector =Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
         }
 
@@ -1139,9 +1184,29 @@ fun ProfileImagePreview() {
 
 @Preview
 @Composable
+fun RedCableClubPreview() {
+    RedCableClubTheme(dynamicColor = false, darkTheme = false) {
+        Surface {
+            RedCableClub(
+                onAchievementDetailClick = {},
+                uiState = RedCableClubUiState(
+                    adsState = ResourceState<List<Ad>>.Success(RedCableClubApiServiceMock.ads),
+                    discoveryState = ResourceState<List<Ad>>.Success(RedCableClubApiServiceMock.discoverPosts),
+                    userProfileState = ResourceState<UserProfile>.Success(RedCableClubApiServiceMock.userMock)
+                )
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
 fun ProfileCardPreview() {
     RedCableClubTheme(dynamicColor = false, darkTheme = true) {
-        ProfileCard(profile = RedCableClubApiServiceMock.userMock)
+        ProfileCard(
+            profile = RedCableClubApiServiceMock.userMock,
+            onAchievementDetailClick = {}
+        )
     }
 }
 
@@ -1149,7 +1214,10 @@ fun ProfileCardPreview() {
 @Composable
 fun ProfileCardPreviewLight() {
     RedCableClubTheme(dynamicColor = false) {
-        ProfileCard(profile = RedCableClubApiServiceMock.userMock)
+        ProfileCard(
+            profile = RedCableClubApiServiceMock.userMock,
+            onAchievementDetailClick = {}
+        )
     }
 }
 
