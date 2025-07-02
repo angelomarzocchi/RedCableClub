@@ -1,22 +1,26 @@
 package com.oneplus.redcableclub.ui.utils
 
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +29,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.oneplus.redcableclub.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -36,9 +41,9 @@ fun RedCableClubTopBar(
     actions: @Composable RowScope.() -> Unit = {},
     showNavigateBack: Boolean = false,
     navigateBack: () -> Unit = {},
-    icon : Int? = R.drawable.ic_launcher_foreground,
+    @DrawableRes icon : Int? = R.drawable.red_cable_club_icon,
 ) {
-    TopAppBar(
+    CenterAlignedTopAppBar(
         modifier = modifier,
         scrollBehavior = scrollBehavior,
         actions = actions,
@@ -46,7 +51,7 @@ fun RedCableClubTopBar(
             if(showNavigateBack)
             IconButton(onClick = navigateBack) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
                     contentDescription = "Localized description"
                 )
             }
@@ -56,17 +61,65 @@ fun RedCableClubTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
-                if(icon != null)
-                    Image(
-                        painter = painterResource(id = icon),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
-                    )
+                Box(
+                    modifier =if(icon != null) Modifier.size(
+                        dimensionResource(id = R.dimen.top_bar_icon_size)
+                    ) else Modifier.height(dimensionResource(id = R.dimen.top_bar_icon_size))
+                ) {
+                    if (icon != null) {
+                        Image(
+                            painter = painterResource(id = icon),
+                            contentDescription = null,
+                            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary),
+                            modifier = Modifier.size(
+                                dimensionResource(id = R.dimen.top_bar_icon_size)
+                            )
+                        )
+                    }
+                }
+                    AnimatedContent(targetState = textResource) {title ->
+                        Text(
+                            text = stringResource(id = title),
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
 
-                Text(
-                    text = stringResource(id = textResource),
-                    style = MaterialTheme.typography.headlineMediumEmphasized)
+
+
             }
         }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Preview(showBackground = true)
+@Composable
+fun RedCableClubTopBarPreview() {
+    RedCableClubTopBar(
+        textResource = R.string.app_name,
+        scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Preview(showBackground = true)
+@Composable
+fun RedCableClubTopBarCustomIconPreview() {
+    RedCableClubTopBar(
+        textResource = R.string.app_name,
+        scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
+        icon = R.drawable.achievement_icon
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Preview(showBackground = true)
+@Composable
+fun RedCableClubTopBarNoIconPreview() {
+    RedCableClubTopBar(
+        textResource = R.string.app_name,
+        scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(),
+        icon = null
     )
 }

@@ -37,16 +37,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -64,7 +62,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -72,6 +69,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -89,37 +87,10 @@ import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
 import com.oneplus.redcableclub.ui.theme.gold
-import com.oneplus.redcableclub.ui.utils.RedCableClubTopBar
 import com.oneplus.redcableclub.ui.utils.ResourceState
 import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
 import kotlin.math.absoluteValue
 import kotlin.math.sin
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun RedCableClubScreen(
-    scrollBehavior: TopAppBarScrollBehavior,
-    onAchievementDetailClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    uiState: RedCableClubUiState
-) {
-    Scaffold(
-        modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar =
-            {
-                RedCableClubTopBar(
-                    textResource = R.string.app_name,
-                    scrollBehavior = scrollBehavior,
-                )
-            }
-    ) { innerPadding ->
-        RedCableClub(
-            uiState = uiState,
-            onAchievementDetailClick = onAchievementDetailClick,
-            paddingValues = innerPadding
-        )
-    }
-}
 
 
 @Composable
@@ -165,9 +136,6 @@ fun RedCableClub(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(
-                top = paddingValues.calculateTopPadding()
-            )
             .verticalScroll(scrollState)
 
     ) {
@@ -180,14 +148,14 @@ fun RedCableClub(
         ) {state ->
             when(state) {
                 is ResourceState.Loading -> ProfileCardSkeleton(
-                    modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_small), end = dimensionResource(R.dimen.padding_small))
+                    modifier = Modifier.padding(top = dimensionResource(R.dimen.padding_medium),start = dimensionResource(R.dimen.padding_medium), end = dimensionResource(R.dimen.padding_medium))
                 )
                 is ResourceState.Error -> ProfileCardError()
                 is ResourceState.Success -> {
                     ProfileCard(
                         profile = state.data,
                         onAchievementDetailClick = onAchievementDetailClick,
-                        modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_small), end = dimensionResource(R.dimen.padding_small))
+                        modifier = Modifier.padding(top = dimensionResource(R.dimen.padding_medium),start = dimensionResource(R.dimen.padding_medium), end = dimensionResource(R.dimen.padding_medium))
                     )
                 }
             }
@@ -199,8 +167,8 @@ fun RedCableClub(
 
         Text(
             text = stringResource(R.string.offers),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_small))
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_medium))
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
         val adsUiState = uiState.adsState
@@ -219,8 +187,8 @@ fun RedCableClub(
 
         Text(
             text = stringResource(R.string.discover),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_small))
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_medium))
 
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
@@ -271,9 +239,17 @@ fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
 
                     Box(
                         modifier = Modifier
-                            .height(dimensionResource(R.dimen.profile_image_size) -  dimensionResource(R.dimen.badge_size) -  dimensionResource(R.dimen.padding_small))
+                            .height(
+                                dimensionResource(R.dimen.profile_image_size) - dimensionResource(
+                                    R.dimen.badge_size
+                                ) - dimensionResource(R.dimen.padding_small)
+                            )
                             .fillMaxWidth()
-                            .padding(bottom =dimensionResource(R.dimen.padding_small), start = dimensionResource(R.dimen.padding_small), end = dimensionResource( R.dimen.padding_small))
+                            .padding(
+                                bottom = dimensionResource(R.dimen.padding_small),
+                                start = dimensionResource(R.dimen.padding_small),
+                                end = dimensionResource(R.dimen.padding_small)
+                            )
                             .clip(RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small))))
                             .background(MaterialTheme.colorScheme.surfaceContainerLow)
                             .shimmerLoadingAnimation()
@@ -295,12 +271,12 @@ fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = Color.Transparent,
-                    modifier = Modifier.
-                        background(
+                    modifier = Modifier
+                        .background(
                             color = MaterialTheme.colorScheme.surfaceContainerLow,
                             shape = RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small)))
-                        ).
-                            shimmerLoadingAnimation()
+                        )
+                        .shimmerLoadingAnimation()
                     )
             }
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
@@ -315,7 +291,8 @@ fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
 fun ProfileCard(
     profile: UserProfile,
     onAchievementDetailClick: () -> Unit,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier,
+) {
     Card(
         modifier = modifier) {
 
@@ -335,13 +312,14 @@ fun ProfileCard(
                 ) {
                     Text(
                         text =  profile.username ,
-                        style = MaterialTheme.typography.headlineLarge,
+                        style = MaterialTheme.typography.headlineMedium,
                         textAlign = TextAlign.Center,
                     )
                     BadgesRow(
                         achievements = profile.achievements,
                         onAchievementDetailClick = onAchievementDetailClick,
                     )
+
 
                 }
             }
@@ -377,11 +355,11 @@ fun ProfileCard(
 fun SkeletonCarousel(
     itemSpacing: Dp = dimensionResource(R.dimen.padding_small),
     modifier: Modifier = Modifier,
-    bottomPadding: Dp = 0.dp
+    bottomPadding: Dp = 0.dp,
 ) {
     Carousel(
         items = listOf<Any>(""),
-        itemContent = { CarouselItemSkeleton(item = it) },
+        itemContent = { CarouselItemSkeleton() },
         itemSpacing = itemSpacing,
         bottomPadding = bottomPadding,
         modifier = modifier
@@ -391,9 +369,11 @@ fun SkeletonCarousel(
 
 
 @Composable
-fun AdCarousel(ads: List<Ad>,
-               itemSpacing: Dp = 0.dp,
-               modifier: Modifier = Modifier) {
+fun AdCarousel(
+    ads: List<Ad>,
+    itemSpacing: Dp = 0.dp,
+    modifier: Modifier = Modifier,
+) {
     Carousel(
         items = ads,
         itemContent = { AdCard(ad = it) },
@@ -619,7 +599,8 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
                 modifier = modifier.fillMaxSize(),
                 loading = {
                     Box(
-                        modifier = modifier.profileImageModifier()
+                        modifier = modifier
+                            .profileImageModifier()
                             .shimmerLoadingAnimation()
                     )
                 },
@@ -627,7 +608,8 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
                     Log.e("ProfileImageError", "Image loading failed for URL: ${post.adImageUrl}", errorState.result.throwable)
 
                     Box(
-                        modifier = modifier.profileImageModifier()
+                        modifier = modifier
+                            .profileImageModifier()
                             .background(MaterialTheme.colorScheme.surfaceVariant), // Simple background for error
                         contentAlignment = Alignment.Center
                     ) {
@@ -664,13 +646,14 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
 
 @Composable
 fun CarouselItemSkeleton(
-    item: Any,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier,
+) {
     Card(
         modifier = modifier.aspectRatio(1.5f)
     ) {
         Box(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .background(
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
                     shape = RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small)))
@@ -709,10 +692,13 @@ fun AdCard(ad: Ad, modifier: Modifier = Modifier) {
                 .build(),
             contentDescription = ad.description,
             contentScale = ContentScale.Crop,
-            modifier = modifier.fillMaxWidth().aspectRatio(1.66f),
+            modifier = modifier
+                .fillMaxWidth()
+                .aspectRatio(1.66f),
             loading = {
                 Box(
-                    modifier = modifier.profileImageModifier()
+                    modifier = modifier
+                        .profileImageModifier()
                         .shimmerLoadingAnimation()
                 )
             },
@@ -720,7 +706,8 @@ fun AdCard(ad: Ad, modifier: Modifier = Modifier) {
                 Log.e("ProfileImageError", "Image loading failed for URL: $ad.adImageUrl", errorState.result.throwable)
 
                 Box(
-                    modifier = modifier.profileImageModifier()
+                    modifier = modifier
+                        .profileImageModifier()
                         .background(MaterialTheme.colorScheme.surfaceVariant), // Simple background for error
                     contentAlignment = Alignment.Center
                 ) {
@@ -770,7 +757,7 @@ fun CouponElementSkeleton(
     borderWidth: Dp = dimensionResource(R.dimen.padding_mini),
     paddingAroundIcon: Dp = dimensionResource(R.dimen.padding_small),
     iconSize: Dp = dimensionResource(R.dimen.coupon_size),
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
 
     Column(
@@ -806,8 +793,10 @@ fun CouponElementSkeleton(
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Transparent,
-            modifier = Modifier.widthIn(max = iconSize * 1.5f)
-                .background(color = MaterialTheme.colorScheme.surfaceContainerLow,
+            modifier = Modifier
+                .widthIn(max = iconSize * 1.5f)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
                     shape = RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small)))
                 )
                 .shimmerLoadingAnimation()
@@ -820,11 +809,9 @@ fun CouponElementSkeleton(
 @Composable
 fun CouponElement(
     coupon: Coupon,
-    borderColor: Color = MaterialTheme.colorScheme.gold,
-    borderWidth: Dp = dimensionResource(R.dimen.padding_mini),
-    paddingAroundIcon: Dp = dimensionResource(R.dimen.padding_small),
     iconSize: Dp = dimensionResource(R.dimen.coupon_size),
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier,
+) {
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -834,18 +821,12 @@ fun CouponElement(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(iconSize)
-                .border(
-                    width = borderWidth,
-                    color = borderColor,
-                    shape = CircleShape
-                )
-                .padding(paddingAroundIcon)
+                .background(MaterialTheme.colorScheme.secondary, CircleShape) // Add a subtle background
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.coupon_icon),
+                imageVector = Icons.Filled.LocalOffer,
                 contentDescription = coupon.description,
-                modifier = Modifier.size(iconSize),
-                tint = MaterialTheme.colorScheme.gold
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_extra_small)))
@@ -854,7 +835,8 @@ fun CouponElement(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.widthIn(max = iconSize * 1.5f)
+            modifier = Modifier.widthIn(max = iconSize * 1.5f),
+            textAlign = TextAlign.Center // Center the text for better balance
         )
     }
 }
@@ -866,7 +848,8 @@ fun MembershipTierProgress(
     toCompleteColor: Color = ProgressIndicatorDefaults.linearTrackColor,
     cableThickness: Dp = 8.dp,
     twists: Int = 3,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier,
+) {
     val actualProgress = remember(points) { MembershipTier.computeProgressToNextTier(points) }
     var animationTarget by remember { mutableFloatStateOf(0f) }
 
@@ -888,7 +871,7 @@ fun MembershipTierProgress(
         ) {
             Text(
                 text = MembershipTier.getTierForPoints(points).label,
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
             )
             Text(
                 text = points.toString(),
@@ -902,7 +885,7 @@ fun MembershipTierProgress(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(cableThickness * 2) // Give some height for the twists
+                .height(cableThickness * 3) // Give some height for the twists
                 .drawBehind {
                     val width = size.width
                     val height = size.height
@@ -990,12 +973,9 @@ fun BadgesRow(
     onAchievementDetailClick: () -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = dimensionResource(R.dimen.badge_size),
-    spacing: Dp = dimensionResource(R.dimen.padding_small),
     ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(
-        space = spacing,
-        alignment = Alignment.CenterHorizontally
-    ), verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
+    Row(horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
 
 
         for( achievement in achievements.take(3)) {
@@ -1034,17 +1014,19 @@ fun BadgesRow(
         FilledIconButton(onClick = onAchievementDetailClick) {
             Icon(imageVector =Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
         }
-
-
     }
 }
 
 @Composable
 fun Modifier.profileImageModifier(
     size: Dp = dimensionResource(R.dimen.profile_image_size),
-     borderWidth: Dp = dimensionResource(R.dimen.padding_extra_small),
-    borderColor: Color = MaterialTheme.colorScheme.secondary): Modifier {
-    return this.size(size).clip(CircleShape).border(borderWidth, borderColor, CircleShape)
+    borderWidth: Dp = dimensionResource(R.dimen.padding_extra_small),
+    borderColor: Color = MaterialTheme.colorScheme.secondary,
+): Modifier {
+    return this
+        .size(size)
+        .clip(CircleShape)
+        .border(borderWidth, borderColor, CircleShape)
 }
 
 @Composable
@@ -1052,7 +1034,8 @@ fun ProfileImageSkeleton(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier.profileImageModifier()
+        modifier = modifier
+            .profileImageModifier()
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .shimmerLoadingAnimation(isLoading = true) // Apply shimmer
     )
@@ -1063,7 +1046,7 @@ fun ProfileImageSkeleton(
 @Composable
 fun ProfileImage(
     imageUrl: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
 
 
@@ -1076,7 +1059,8 @@ fun ProfileImage(
     modifier = modifier.profileImageModifier(),
         loading = {
             Box(
-                modifier = modifier.profileImageModifier()
+                modifier = modifier
+                    .profileImageModifier()
                     .shimmerLoadingAnimation()
             )
         },
@@ -1084,7 +1068,8 @@ fun ProfileImage(
             Log.e("ProfileImageError", "Image loading failed for URL: $imageUrl", errorState.result.throwable)
 
             Box(
-                modifier = modifier.profileImageModifier()
+                modifier = modifier
+                    .profileImageModifier()
                     .background(MaterialTheme.colorScheme.surfaceVariant), // Simple background for error
                 contentAlignment = Alignment.Center
             ) {
@@ -1190,9 +1175,9 @@ fun RedCableClubPreview() {
             RedCableClub(
                 onAchievementDetailClick = {},
                 uiState = RedCableClubUiState(
-                    adsState = ResourceState<List<Ad>>.Success(RedCableClubApiServiceMock.ads),
-                    discoveryState = ResourceState<List<Ad>>.Success(RedCableClubApiServiceMock.discoverPosts),
-                    userProfileState = ResourceState<UserProfile>.Success(RedCableClubApiServiceMock.userMock)
+                    adsState = ResourceState.Success(RedCableClubApiServiceMock.ads),
+                    discoveryState = ResourceState.Success(RedCableClubApiServiceMock.discoverPosts),
+                    userProfileState = ResourceState.Success(RedCableClubApiServiceMock.userMock)
                 )
             )
         }

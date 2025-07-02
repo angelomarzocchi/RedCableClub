@@ -34,13 +34,11 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -70,7 +68,6 @@ import com.oneplus.redcableclub.R
 import com.oneplus.redcableclub.data.model.Achievement
 import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
-import com.oneplus.redcableclub.ui.utils.RedCableClubTopBar
 import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
 
 // Define constants for header heights
@@ -84,39 +81,15 @@ private val NameTextSizeExpanded = 32.sp
 private val NameTextSizeCollapsed = 24.sp
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AchievementsScreen(
-    scrollBehavior: TopAppBarScrollBehavior,
-    modifier: Modifier = Modifier,
-    achievements: List<Achievement>,
-    navigateBack: () -> Unit = {},
-) {
-    Scaffold(
-        modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            RedCableClubTopBar(
-                textResource = R.string.achievements,
-                scrollBehavior = scrollBehavior,
-                showNavigateBack = true,
-                navigateBack = navigateBack,
-                icon = null
-            )
-        }
-    ) { innerPadding ->
-        Achievements(
-            achievements = achievements,
-            modifier = Modifier.padding(innerPadding)
-        )
 
-    }
-}
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun Achievements(
     achievements: List<Achievement>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    paddingValues: PaddingValues = PaddingValues(0.dp)
+
 ) {
     var selectedAchievement: Achievement by remember { mutableStateOf(achievements[0]) }
     val density = LocalDensity.current
@@ -163,6 +136,7 @@ fun Achievements(
                 .fillMaxSize()
                 // Attach the nested scroll connection to the Scaffold
                 .nestedScroll(nestedScrollConnection)
+                .padding(top = paddingValues.calculateTopPadding())
         ) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -189,7 +163,10 @@ fun Achievements(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(headerHeightDp) // Apply the dynamic height
-                        .padding(dimensionResource(R.dimen.padding_small))
+                        .padding(
+                            start = dimensionResource(R.dimen.padding_small),
+                            end = dimensionResource(R.dimen.padding_small),
+                        )
                 ) {
                     Column(
                         verticalArrangement = Arrangement.Center,
