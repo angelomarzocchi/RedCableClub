@@ -3,6 +3,7 @@ package com.oneplus.redcableclub.navigation
 
 
 
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
@@ -29,12 +30,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entry
 import androidx.navigation3.runtime.entryProvider
@@ -94,6 +97,8 @@ fun NavigationRoot(
 
     val insets = WindowInsets.systemBars
 
+    val backStackEntry by remember { mutableStateOf(backStack.lastOrNull()) }
+
 
     Scaffold(
         modifier = modifier
@@ -113,7 +118,7 @@ fun NavigationRoot(
         },
         bottomBar = {
             AnimatedVisibility(
-                visible = showBottomNavigation(backStack.lastOrNull()),
+                visible = showBottomNavigation(backStackEntry),
                 // Slide in from the bottom
                 enter = slideInVertically(initialOffsetY = { it }),
                 // Slide out to the bottom
@@ -121,7 +126,7 @@ fun NavigationRoot(
             ) {
 
                 RedCableClubNavigationBar(
-                    isSelected = { navKey -> backStack.lastOrNull() == navKey },
+                    isSelected = { navKey -> backStackEntry == navKey },
                     onSelected = { navKey -> backStack.apply { clear(); addLast(navKey) } },
                     scrollBehavior = bottomScrollBehavior
                 )
@@ -138,8 +143,42 @@ fun NavigationRoot(
                 rememberSavedStateNavEntryDecorator(),
                 rememberViewModelStoreNavEntryDecorator()
         ),
-            entryProvider = entryProvider {
+            entryProvider = { route ->
+                when(route) {
+                    is RedCableClubScreen -> {
+                        NavEntry(key = route) {
+                            Log.d("NavigationRoot", "RedCableClubScreen")
+                            topBarTitle = R.string.app_name
+                            RedCableClub(
+                                uiState = uiState,
+                                onAchievementDetailClick = {
+                                    backStack.addLast(AchievementScreen)
+                                },
+                                paddingValues = insets.asPaddingValues(),
+
+                                )
+                        }
+                    }
+                    is AchievementScreen -> {
+                        NavEntry(key = route) {
+                            Log.d("NavigationRoot", "AchievementScreen")
+                            topBarTitle = R.string.achievements
+                            Achievements(
+                                achievements = (uiState.userProfileState as ResourceState.Success<UserProfile>).data.achievements,
+                            )
+                        }
+                    }
+                    else -> {
+                        NavEntry(key = RedCableClubScreen) {}
+                    }
+                }
+            },
+
+
+
+               /*
                 entry<RedCableClubScreen> {
+                    Log.d("NavigationRoot", "RedCableClubScreen")
                     topBarTitle = R.string.app_name
                     RedCableClub(
                         uiState = uiState,
@@ -152,12 +191,15 @@ fun NavigationRoot(
                 }
 
                 entry<AchievementScreen> {
+                    Log.d("NavigationRoot", "AchievementScreen")
                     topBarTitle = R.string.achievements
                     Achievements(
                         achievements = (uiState.userProfileState as ResourceState.Success<UserProfile>).data.achievements,
                     )
                 }
-            },
+
+                */
+
             transitionSpec = {
                 // Slide in from right when navigating forward
                 slideInHorizontally(initialOffsetX = { it }) togetherWith
