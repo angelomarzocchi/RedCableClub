@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Card
@@ -240,12 +241,15 @@ fun AchievementDetail(
         val iconSharedState = rememberSharedContentState(key = "achievement-icon-${achievement.iconUrl}")
         val nameSharedState = rememberSharedContentState(key = "achievement-name-${achievement.name}")
 
+
+        val cardAnimationDuration = 300
+        val contentAnimationDelay = 300
         Card(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(dimensionResource(R.dimen.padding_small))
                 // animateContentSize makes the card smoothly animate its own size changes
-                .animateContentSize(animationSpec = tween(300))
+                .animateContentSize(animationSpec = tween(cardAnimationDuration))
         ) {
             // AnimatedContent handles the smooth transition between the Column (expanded)
             // and Row (collapsed) layouts based on `targetIsExpanded`.
@@ -258,8 +262,19 @@ fun AchievementDetail(
                     // `togetherWith` applies transitions to both the old and new content concurrently.
                     // These transitions apply to the *container* of the shared elements,
                     // while shared elements handle their own positional animation.
-                    ( fadeIn(animationSpec = tween(300)) + expandVertically(animationSpec = tween(durationMillis = 300, delayMillis = 150), expandFrom = Alignment.Top)) togetherWith
-                            (fadeOut(animationSpec = tween(300)) + shrinkVertically(animationSpec = tween(durationMillis = 300, delayMillis = 150), shrinkTowards = Alignment.Top))
+                    val enterTransition = fadeIn(animationSpec = tween(durationMillis = cardAnimationDuration, delayMillis = contentAnimationDelay)) +
+                            expandVertically(
+                                animationSpec = tween(durationMillis = cardAnimationDuration, delayMillis = contentAnimationDelay),
+                                expandFrom = Alignment.Top
+                            )
+
+                    val exitTransition = fadeOut(animationSpec = tween(durationMillis = cardAnimationDuration)) +
+                            shrinkVertically(
+                                animationSpec = tween(durationMillis = cardAnimationDuration, delayMillis = contentAnimationDelay),
+                                shrinkTowards = Alignment.Top
+                            )
+
+                    enterTransition togetherWith exitTransition
                 }
             ) { targetIsExpanded ->
                 if (targetIsExpanded) {
@@ -311,6 +326,7 @@ fun AchievementDetail(
                         Text(
                             text = achievement.name,
                             style = MaterialTheme.typography.displaySmall.copy(fontSize = animatedNameTextSize), // Font size driven by lerp
+                            autoSize = TextAutoSize.StepBased(maxFontSize = MaterialTheme.typography.displaySmall.fontSize),
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,

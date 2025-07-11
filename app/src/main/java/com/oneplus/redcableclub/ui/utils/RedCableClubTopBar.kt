@@ -32,6 +32,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.oneplus.redcableclub.R
 
+data class TopBarState(
+    val textResource: Int,
+    val showNavigateBack: Boolean = false,
+    val navigateBack: () -> Unit = {},
+    val icon : Int? = null,
+    val isNavigatingBack: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RedCableClubTopBar(

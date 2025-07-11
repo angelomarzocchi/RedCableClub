@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -39,10 +40,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,16 +57,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -86,11 +85,13 @@ import com.oneplus.redcableclub.data.model.MembershipTier
 import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
-import com.oneplus.redcableclub.ui.theme.gold
+import com.oneplus.redcableclub.ui.utils.FadingEdgeSide
 import com.oneplus.redcableclub.ui.utils.ResourceState
+import com.oneplus.redcableclub.ui.utils.fadingEdge
 import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
 import kotlin.math.absoluteValue
-import kotlin.math.sin
+import kotlin.math.max
+import kotlin.math.min
 
 
 @Composable
@@ -353,8 +354,8 @@ fun ProfileCard(
 
 @Composable
 fun SkeletonCarousel(
-    itemSpacing: Dp = dimensionResource(R.dimen.padding_small),
     modifier: Modifier = Modifier,
+    itemSpacing: Dp = dimensionResource(R.dimen.padding_small),
     bottomPadding: Dp = 0.dp,
 ) {
     Carousel(
@@ -371,8 +372,8 @@ fun SkeletonCarousel(
 @Composable
 fun AdCarousel(
     ads: List<Ad>,
-    itemSpacing: Dp = 0.dp,
     modifier: Modifier = Modifier,
+    itemSpacing: Dp = 0.dp
 ) {
     Carousel(
         items = ads,
@@ -494,8 +495,8 @@ fun <T> Carousel(
 fun DynamicCarouselIndicator(
     size: Int, // Total number of items
     currentPage: Int,
-    maxVisibleIndicators: Int = 7, // Maximum number of indicators to show (including current)
     modifier: Modifier = Modifier,
+    maxVisibleIndicators: Int = 7, // Maximum number of indicators to show (including current)
     activeColor: Color = MaterialTheme.colorScheme.primary,
     inactiveColor: Color = Color.LightGray,
     indicatorSize: Dp = 8.dp,
@@ -509,10 +510,10 @@ fun DynamicCarouselIndicator(
         verticalAlignment = Alignment.CenterVertically // Align text vertically
     ) {
         // Calculate the range of indicators to display
-        val startIndex = kotlin.math.max(0, currentPage - maxVisibleIndicators / 2)
-        val endIndex = kotlin.math.min(size - 1, startIndex + maxVisibleIndicators - 1)
+        val startIndex = max(0, currentPage - maxVisibleIndicators / 2)
+        val endIndex = min(size - 1, startIndex + maxVisibleIndicators - 1)
         if (startIndex > 0) {
-            for(i in kotlin.math.min(3,startIndex) downTo 1) {
+            for(i in min(3,startIndex) downTo 1) {
                 Box(
                     modifier = Modifier
                         .padding(horizontal = indicatorPadding)
@@ -565,7 +566,7 @@ fun DynamicCarouselIndicator(
 
 
         if (endIndex < size - 1) {
-            for(i in 1..kotlin.math.min(3,size - 1 - endIndex)) {
+            for(i in 1..min(3,size - 1 - endIndex)) {
                 Box(
                     modifier = Modifier
                         .padding(horizontal = indicatorPadding)
@@ -616,7 +617,7 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
                         Icon(
                             imageVector = Icons.Filled.Clear,
                             contentDescription = "Image loading failed",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             // Adjust icon size
                         )
                     }
@@ -714,7 +715,7 @@ fun AdCard(ad: Ad, modifier: Modifier = Modifier) {
                     Icon(
                         imageVector = Icons.Filled.Clear,
                         contentDescription = "Image loading failed",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.fillMaxSize()
                         // Adjust icon size
                     )
@@ -740,24 +741,43 @@ fun CouponHorizontalListSkeleton(modifier: Modifier = Modifier) {
 
 @Composable
 fun CouponHorizontalList(coupons: List<Coupon>,modifier: Modifier = Modifier) {
+    val lazyListState = rememberLazyListState()
+    val canScrollLeft = lazyListState.canScrollBackward
+    val canScrollRight = lazyListState.canScrollForward
+
+
+
+    val smallPadding = dimensionResource(R.dimen.padding_small)
+
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-        modifier = modifier.padding(dimensionResource(R.dimen.padding_small))
-    ) {
+        state = lazyListState,
+        horizontalArrangement = Arrangement.spacedBy(smallPadding),
+        modifier = modifier
+            .padding(dimensionResource(R.dimen.padding_small))
+            .fadingEdge(
+                side = FadingEdgeSide.Start,
+                width = 20.dp,
+                isVisible = canScrollLeft
+            )
+            .fadingEdge(
+                side = FadingEdgeSide.End,
+                width = 20.dp,
+                isVisible = canScrollRight
+            )
+    )  {
 
         items(coupons.size) { index ->
-            CouponElement(coupon = coupons[index])
+            CouponElement(
+                coupon = coupons[index],
+            )
         }
     }
 }
 
 @Composable
 fun CouponElementSkeleton(
-    borderColor: Color = MaterialTheme.colorScheme.gold,
-    borderWidth: Dp = dimensionResource(R.dimen.padding_mini),
-    paddingAroundIcon: Dp = dimensionResource(R.dimen.padding_small),
-    iconSize: Dp = dimensionResource(R.dimen.coupon_size),
     modifier: Modifier = Modifier,
+    iconSize: Dp = dimensionResource(R.dimen.coupon_size)
 ) {
 
     Column(
@@ -769,12 +789,7 @@ fun CouponElementSkeleton(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(iconSize)
-                .border(
-                    width = borderWidth,
-                    color = borderColor,
-                    shape = CircleShape
-                )
-                .padding(paddingAroundIcon)
+                .background(MaterialTheme.colorScheme.primary, CircleShape)
         ) {
             Box(
                 modifier = Modifier
@@ -809,8 +824,9 @@ fun CouponElementSkeleton(
 @Composable
 fun CouponElement(
     coupon: Coupon,
-    iconSize: Dp = dimensionResource(R.dimen.coupon_size),
     modifier: Modifier = Modifier,
+    iconSize: Dp = dimensionResource(R.dimen.coupon_size)
+
 ) {
     Column(
         verticalArrangement = Arrangement.Center,
@@ -821,7 +837,7 @@ fun CouponElement(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(iconSize)
-                .background(MaterialTheme.colorScheme.secondary, CircleShape) // Add a subtle background
+                .background(MaterialTheme.colorScheme.primary, CircleShape) // Add a subtle background
         ) {
             Icon(
                 imageVector = Icons.Filled.LocalOffer,
@@ -841,14 +857,13 @@ fun CouponElement(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MembershipTierProgress(
     points: Int,
-    progressColor: Color = ProgressIndicatorDefaults.linearColor,
-    toCompleteColor: Color = ProgressIndicatorDefaults.linearTrackColor,
-    cableThickness: Dp = 8.dp,
-    twists: Int = 3,
     modifier: Modifier = Modifier,
+    cableThickness: Dp = 16.dp,
+
 ) {
     val actualProgress = remember(points) { MembershipTier.computeProgressToNextTier(points) }
     var animationTarget by remember { mutableFloatStateOf(0f) }
@@ -878,73 +893,23 @@ fun MembershipTierProgress(
                 style = MaterialTheme.typography.titleSmall
             )
         }
-        // LinearProgressIndicator(progress = { MembershipTier.computeProgressToNextTier(points) },modifier = Modifier.fillMaxWidth())
-
-        val density = LocalDensity.current
-        val cableThicknessPx = with(density) { cableThickness.toPx() }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(cableThickness * 3) // Give some height for the twists
-                .drawBehind {
-                    val width = size.width
-                    val height = size.height
-
-                    // Create the path for the twisted cable
-                    val path = Path()
-                    val numSegments = 100 // Increase for smoother twists
-                    val segmentWidth = width / numSegments.toFloat()
-                    val twistAmplitude = height / 4f // Adjust amplitude of the twist
-
-                    path.moveTo(0f, height / 2f) // Start at the left center
-
-                    for (i in 0..numSegments) {
-                        val x = i * segmentWidth
-                        val y =
-                            height / 2f + sin((i.toFloat() / numSegments.toFloat()) * twists * 2 * Math.PI).toFloat() * twistAmplitude // Use sine wave for twist
-                        path.lineTo(x, y)
-                    }
-
-                    // Draw the entire path with the uncompleted color (background)
-                    drawPath(
-                        path = path,
-                        color = toCompleteColor,
-                        style = Stroke(width = cableThicknessPx, cap = StrokeCap.Round)
-                    )
-
-                    // Draw the completed portion of the path with the progress color (foreground)
-                    // We need to create a new path that only goes up to the animated progress
-                    val progressPath = Path()
-                    progressPath.moveTo(0f, height / 2f)
-
-                    for (i in 0..numSegments) {
-                        val x = i * segmentWidth
-                        val y =
-                            height / 2f + sin((i.toFloat() / numSegments.toFloat()) * twists * 2 * Math.PI).toFloat() * twistAmplitude
-
-                        if (x <= animatedProgress * width || i == numSegments) {
-                            progressPath.lineTo(x, y)
-                        } else {
-                            // Move to the current point to avoid drawing a line to the end
-                            progressPath.moveTo(x, y)
-                        }
-                    }
-
-                    drawPath(
-                        path = progressPath,
-                        color = progressColor,
-                        style = Stroke(width = cableThicknessPx, cap = StrokeCap.Round)
-                    )
-
-                })
-
+        LinearWavyProgressIndicator(
+            progress = {animatedProgress},
+            modifier = Modifier.fillMaxWidth(),
+            stroke = Stroke(width = cableThickness.value, cap = StrokeCap.Round),
+            waveSpeed = 5.dp
+        )
 
     }
 }
 
 
 @Composable
-fun BadgesRowSkeleton(size: Dp = dimensionResource(R.dimen.badge_size),spacing: Dp = dimensionResource(R.dimen.padding_small), modifier: Modifier = Modifier) {
+fun BadgesRowSkeleton(
+    modifier: Modifier = Modifier,
+    size: Dp = dimensionResource(R.dimen.badge_size),
+    spacing: Dp = dimensionResource(R.dimen.padding_small),
+    ) {
     Row(horizontalArrangement = Arrangement.spacedBy(
         space = spacing,
         alignment = Alignment.CenterHorizontally
@@ -1003,7 +968,7 @@ fun BadgesRow(
                         Icon(
                             imageVector = Icons.Filled.Clear,
                             contentDescription = "Image loading failed",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier
                                 .size(size)
                         )
@@ -1021,7 +986,7 @@ fun BadgesRow(
 fun Modifier.profileImageModifier(
     size: Dp = dimensionResource(R.dimen.profile_image_size),
     borderWidth: Dp = dimensionResource(R.dimen.padding_extra_small),
-    borderColor: Color = MaterialTheme.colorScheme.secondary,
+    borderColor: Color = MaterialTheme.colorScheme.primary,
 ): Modifier {
     return this
         .size(size)

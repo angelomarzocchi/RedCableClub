@@ -18,18 +18,13 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.FloatingToolbarExitDirection
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomAppBarState
-import androidx.compose.material3.rememberFloatingToolbarState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -39,8 +34,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entry
-import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
@@ -53,6 +46,7 @@ import com.oneplus.redcableclub.ui.screens.RedCableClubViewModel
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationBar
 import com.oneplus.redcableclub.ui.utils.RedCableClubTopBar
 import com.oneplus.redcableclub.ui.utils.ResourceState
+import com.oneplus.redcableclub.ui.utils.TopBarState
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -60,12 +54,6 @@ data object RedCableClubScreen: NavKey
 
 @Serializable
 data object AchievementScreen: NavKey
-
-@Serializable
-data object  CouponsScreen: NavKey
-
-@Serializable
-data class CouponDetailScreen(val couponCode: String): NavKey
 
 @Serializable
 data object RedCoinsShopScreen: NavKey
@@ -83,22 +71,17 @@ fun NavigationRoot(
     modifier: Modifier = Modifier
 ) {
     val redCableClubViewModel: RedCableClubViewModel = viewModel(factory = RedCableClubViewModel.Factory)
-    LaunchedEffect(Unit) { // Keyed on Unit to run once, or on a userId if it can change
-        redCableClubViewModel.getUserProfile("AngeloMarzo")
-    }
+
     val uiState by redCableClubViewModel.uiState.collectAsState()
 
     val backStack = rememberNavBackStack(RedCableClubScreen)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
     val bottomScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior(rememberBottomAppBarState())
-    val bottomFloatingScrollBehavior = FloatingToolbarDefaults.exitAlwaysScrollBehavior(exitDirection = FloatingToolbarExitDirection.Bottom, rememberFloatingToolbarState())
 
-    var topBarTitle by remember { mutableIntStateOf(R.string.app_name) }
-
+    var topBarState by remember { mutableStateOf(TopBarState(R.string.app_name, showNavigateBack = false, icon = R.drawable.red_cable_club_icon)) }
     val insets = WindowInsets.systemBars
 
     val backStackEntry by remember { mutableStateOf(backStack.lastOrNull()) }
-
 
     Scaffold(
         modifier = modifier
@@ -107,18 +90,21 @@ fun NavigationRoot(
         topBar = {
             AnimatedContent(
                 // Slide in from the top
-                targetState = topBarTitle,
-                transitionSpec = { slideInHorizontally { it } togetherWith slideOutHorizontally { -it } }
-            ) { title ->
+                targetState = topBarState.textResource,
+                transitionSpec = { slideInHorizontally { if(topBarState.isNavigatingBack) it else -it } togetherWith slideOutHorizontally { if(topBarState.isNavigatingBack) -it else it } }
+            ) { text ->
                 RedCableClubTopBar(
                     scrollBehavior = scrollBehavior,
-                    textResource = title
+                    textResource = text,
+                    showNavigateBack = topBarState.showNavigateBack,
+                    icon = topBarState.icon,
+                    navigateBack = topBarState.navigateBack
                 )
             }
         },
         bottomBar = {
             AnimatedVisibility(
-                visible = showBottomNavigation(backStackEntry),
+                visible = showBottomNavigation(backStack.lastOrNull()),
                 // Slide in from the bottom
                 enter = slideInVertically(initialOffsetY = { it }),
                 // Slide out to the bottom
@@ -148,7 +134,7 @@ fun NavigationRoot(
                     is RedCableClubScreen -> {
                         NavEntry(key = route) {
                             Log.d("NavigationRoot", "RedCableClubScreen")
-                            topBarTitle = R.string.app_name
+                            topBarState = TopBarState(R.string.app_name, showNavigateBack = false, icon = R.drawable.red_cable_club_icon)
                             RedCableClub(
                                 uiState = uiState,
                                 onAchievementDetailClick = {
@@ -162,7 +148,14 @@ fun NavigationRoot(
                     is AchievementScreen -> {
                         NavEntry(key = route) {
                             Log.d("NavigationRoot", "AchievementScreen")
-                            topBarTitle = R.string.achievements
+                            topBarState = TopBarState(
+                                R.string.achievements,
+                                showNavigateBack = true,
+                                navigateBack = {
+                                    backStack.remove(AchievementScreen)
+                                },
+                                isNavigatingBack = true
+                            )
                             Achievements(
                                 achievements = (uiState.userProfileState as ResourceState.Success<UserProfile>).data.achievements,
                             )
@@ -173,33 +166,6 @@ fun NavigationRoot(
                     }
                 }
             },
-
-
-
-               /*
-                entry<RedCableClubScreen> {
-                    Log.d("NavigationRoot", "RedCableClubScreen")
-                    topBarTitle = R.string.app_name
-                    RedCableClub(
-                        uiState = uiState,
-                        onAchievementDetailClick = {
-                            backStack.addLast(AchievementScreen)
-                        },
-                        paddingValues = insets.asPaddingValues(),
-
-                    )
-                }
-
-                entry<AchievementScreen> {
-                    Log.d("NavigationRoot", "AchievementScreen")
-                    topBarTitle = R.string.achievements
-                    Achievements(
-                        achievements = (uiState.userProfileState as ResourceState.Success<UserProfile>).data.achievements,
-                    )
-                }
-
-                */
-
             transitionSpec = {
                 // Slide in from right when navigating forward
                 slideInHorizontally(initialOffsetX = { it }) togetherWith

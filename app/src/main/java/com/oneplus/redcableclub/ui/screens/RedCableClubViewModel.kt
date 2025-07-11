@@ -33,7 +33,10 @@ class RedCableClubViewModel(
         private val _uiState = MutableStateFlow(RedCableClubUiState())
     val uiState: StateFlow<RedCableClubUiState> = _uiState.asStateFlow()
 
+    private val currentUserId = "AngeloMarzo"
+
     init {
+        getUserProfile(currentUserId)
         getAds()
         getDiscoverPosts()
     }
