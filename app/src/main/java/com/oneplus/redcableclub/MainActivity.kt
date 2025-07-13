@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
             RedCableClubTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val windowSize = calculateWindowSizeClass(activity = this)
-                   NavigationRoot()
+                   NavigationRoot(windowSizeClass = windowSize)
 
                 }
                 }
