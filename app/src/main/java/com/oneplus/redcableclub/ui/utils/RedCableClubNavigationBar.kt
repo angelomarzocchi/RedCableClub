@@ -105,10 +105,12 @@ fun RedCableClubNavigationBar(
 fun RedCableClubFloatingNavigationBar(
     isSelected: (NavKey) -> Boolean,
     onSelected: (NavKey) -> Unit,
-    scrollBehavior: FloatingToolbarScrollBehavior? = null
+    scrollBehavior: FloatingToolbarScrollBehavior? = null,
+    modifier : Modifier = Modifier
 ) {
 
     HorizontalFloatingToolbar(
+        modifier = modifier,
         scrollBehavior = scrollBehavior,expanded = true) {
         bottomNavigationItems.forEach { it ->
             NavigationBarItem(

@@ -6,6 +6,8 @@ package com.oneplus.redcableclub.navigation
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -19,20 +21,25 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.FloatingToolbarExitDirection
+import androidx.compose.material3.FloatingToolbarState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomAppBarState
+import androidx.compose.material3.rememberFloatingToolbarState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.dimensionResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -47,6 +54,7 @@ import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.ui.screens.Achievements
 import com.oneplus.redcableclub.ui.screens.RedCableClub
 import com.oneplus.redcableclub.ui.screens.RedCableClubViewModel
+import com.oneplus.redcableclub.ui.utils.RedCableClubFloatingNavigationBar
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationBar
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationRail
 import com.oneplus.redcableclub.ui.utils.RedCableClubPermanentNavigationDrawer
@@ -75,7 +83,7 @@ data object ServiceDetailScreen: NavKey
 @Composable
 fun NavigationRoot(
     windowSizeClass: WindowSizeClass,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val redCableClubViewModel: RedCableClubViewModel = viewModel(factory = RedCableClubViewModel.Factory)
 
@@ -89,8 +97,8 @@ fun NavigationRoot(
     var topBarState by remember { mutableStateOf(TopBarState(R.string.app_name, showNavigateBack = false, icon = R.drawable.red_cable_club_icon)) }
     val insets = WindowInsets.systemBars
 
+    var mainContentSize by remember { mutableIntStateOf(0) }
 
-    val currentScreen by remember { derivedStateOf { (backStack.lastOrNull()) } }
 
     val isScreenSelected: (NavKey) -> Boolean = { navKey -> backStack.lastOrNull() == navKey}
     val onScreenSelected: (NavKey) -> Unit = { navKey -> backStack.apply { clear(); addLast(navKey) } }
@@ -117,7 +125,7 @@ fun NavigationRoot(
             },
             bottomBar = {
                 AnimatedVisibility(
-                    visible = showBottomNavigation(backStack.lastOrNull()) && navigationType == RedCableClubNavigationType.BOTTOM_NAVIGATION,
+                    visible = showNavigation(backStack.lastOrNull()) && navigationType == RedCableClubNavigationType.BOTTOM_NAVIGATION,
                     // Slide in from the bottom
                     enter = slideInVertically(initialOffsetY = { it }),
                     // Slide out to the bottom
@@ -133,25 +141,33 @@ fun NavigationRoot(
         ) { innerPadding ->
             Row(modifier = Modifier.padding(innerPadding)) {
 
-                    if (navigationType == RedCableClubNavigationType.NAVIGATION_RAIL)
-                        RedCableClubNavigationRail(
-                            isSelected = isScreenSelected,
-                            onSelected = onScreenSelected,
-                            modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium))
-                        )
+                    if (navigationType == RedCableClubNavigationType.NAVIGATION_RAIL) {
+
+                            RedCableClubNavigationRail(
+                                isSelected = isScreenSelected,
+                                onSelected = onScreenSelected,
+                                modifier = Modifier
+                                    .padding(horizontal = dimensionResource(R.dimen.padding_small))
+                                    .onSizeChanged { size -> mainContentSize = size.width }
+                            )
+
+
+                    } else { mainContentSize = 0}
 
                     RedCableClubNavDisplay(
                         modifier = modifier,
                         backStack = backStack,
                         onTopBarStateChange = { newTopBarState -> topBarState = newTopBarState },
                         uiState = uiState,
-                        insets = insets
+                        insets = insets,
+                        mainContentWidthInPx = mainContentSize
                     )
 
             }
         }
     } else {
         RedCableClubPermanentNavigationDrawer(
+            modifier = Modifier.onSizeChanged {size -> mainContentSize = size.width},
             isSelected = isScreenSelected,
             onSelected = onScreenSelected,
             appContent = {
@@ -160,7 +176,8 @@ fun NavigationRoot(
                     backStack = backStack,
                     onTopBarStateChange = { newTopBarState -> topBarState = newTopBarState },
                     uiState = uiState,
-                    insets = insets
+                    insets = insets,
+                    mainContentWidthInPx = mainContentSize
                 )
             }
         )
@@ -168,7 +185,8 @@ fun NavigationRoot(
 }
 
 
-fun showBottomNavigation(navKey: NavKey?): Boolean {
+
+fun showNavigation(navKey: NavKey?): Boolean {
     return navKey == RedCableClubScreen ||
             navKey == RedCoinsShopScreen ||
             navKey == ServiceDetailScreen
@@ -182,7 +200,8 @@ fun RedCableClubNavDisplay(
     backStack: androidx.navigation3.runtime.NavBackStack,
     onTopBarStateChange: (TopBarState) -> Unit,
     uiState: com.oneplus.redcableclub.ui.screens.RedCableClubUiState,
-    insets: WindowInsets
+    insets: WindowInsets,
+    mainContentWidthInPx: Int,
 ) {
     NavDisplay(
         modifier = modifier,
@@ -228,15 +247,17 @@ fun RedCableClubNavDisplay(
                     NavEntry(key = RedCableClubScreen) {}
                 }
             }
-        },
-        transitionSpec = {
-            slideInHorizontally(initialOffsetX = { it }) togetherWith slideOutHorizontally(targetOffsetX = { -it })
+        }, transitionSpec = {
+            slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth + mainContentWidthInPx }) + fadeIn() togetherWith
+                    slideOutHorizontally(targetOffsetX = { fullWidth -> -fullWidth - mainContentWidthInPx }) + fadeOut()
         },
         popTransitionSpec = {
-            slideInHorizontally(initialOffsetX = { -it }) togetherWith slideOutHorizontally(targetOffsetX = { it })
+            slideInHorizontally(initialOffsetX = { fullWidth -> -fullWidth - mainContentWidthInPx }) + fadeIn() togetherWith
+                    slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth + mainContentWidthInPx }) + fadeOut()
         },
         predictivePopTransitionSpec = {
-            slideInHorizontally(initialOffsetX = { -it }) togetherWith slideOutHorizontally(targetOffsetX = { it })
+            slideInHorizontally(initialOffsetX = { fullWidth -> -fullWidth - mainContentWidthInPx }) + fadeIn() togetherWith
+                    slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth + mainContentWidthInPx }) + fadeOut()
         }
     )
 }

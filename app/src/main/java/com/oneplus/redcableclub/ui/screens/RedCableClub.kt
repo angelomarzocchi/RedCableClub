@@ -8,6 +8,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,6 +41,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -47,6 +50,8 @@ import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.carousel.HorizontalCenteredHeroCarousel
+import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,8 +61,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -85,7 +92,9 @@ import com.oneplus.redcableclub.data.model.MembershipTier
 import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
+import com.oneplus.redcableclub.ui.utils.ClearGlassBox
 import com.oneplus.redcableclub.ui.utils.FadingEdgeSide
+import com.oneplus.redcableclub.ui.utils.FrostedGlassBox
 import com.oneplus.redcableclub.ui.utils.ResourceState
 import com.oneplus.redcableclub.ui.utils.fadingEdge
 import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
@@ -102,37 +111,6 @@ fun RedCableClub(
     paddingValues: PaddingValues = PaddingValues(0.dp),
     ) {
     val scrollState = rememberScrollState()
-    val hapticFeedback = LocalHapticFeedback.current
-    var atTopBoundary by remember { mutableStateOf(!scrollState.canScrollBackward) }
-    var atBottomBoundary by remember(scrollState.maxValue) {
-        mutableStateOf(scrollState.maxValue > 0 && !scrollState.canScrollForward)
-    }
-
-    LaunchedEffect(
-        scrollState.canScrollBackward,
-        scrollState.canScrollForward,
-        scrollState.maxValue
-    ) {
-        val isScrollable = scrollState.maxValue > 0
-        val currentlyAtTop = !scrollState.canScrollBackward
-        val currentlyAtBottom = isScrollable && !scrollState.canScrollForward
-        // User scrolled to top
-        if (currentlyAtTop && !atTopBoundary) {
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-        }
-        atTopBoundary = currentlyAtTop // Update the state for the next evaluation
-
-        // User scrolled to bottom (only if scrollable)
-        if (isScrollable) {
-            if (currentlyAtBottom && !atBottomBoundary) {
-                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-            }
-            atBottomBoundary = currentlyAtBottom // Update state
-        } else {
-            // If not scrollable, it cannot be at a "bottom scroll boundary"
-            atBottomBoundary = false
-        }
-    }
 
     Column(
         modifier = modifier
@@ -156,7 +134,11 @@ fun RedCableClub(
                     ProfileCard(
                         profile = state.data,
                         onAchievementDetailClick = onAchievementDetailClick,
-                        modifier = Modifier.padding(top = dimensionResource(R.dimen.padding_medium),start = dimensionResource(R.dimen.padding_medium), end = dimensionResource(R.dimen.padding_medium))
+                        modifier = Modifier
+                            .padding(
+                                top = dimensionResource(R.dimen.padding_medium),
+                                start = dimensionResource(R.dimen.padding_medium),
+                                end = dimensionResource(R.dimen.padding_medium))
                     )
                 }
             }
@@ -180,7 +162,13 @@ fun RedCableClub(
             when(state) {
                 is ResourceState.Loading -> SkeletonCarousel()
                 is ResourceState.Error -> Text(text = "Error")
-                is ResourceState.Success<List<Ad>> -> AdCarousel(ads = state.data)
+                is ResourceState.Success<List<Ad>> -> AdMaterial3Carousel(
+                    ads = state.data,
+                    modifier = Modifier.padding(
+                        start =dimensionResource(R.dimen.padding_medium),
+                        end = dimensionResource(R.dimen.padding_medium)
+                    )
+                )
             }
         }
 
@@ -201,8 +189,9 @@ fun RedCableClub(
             when(state) {
                 is ResourceState.Loading -> SkeletonCarousel()
                 is ResourceState.Error -> Text(text = "Error")
-                is ResourceState.Success<List<Ad>> -> DiscoverPostCarousel(
+                is ResourceState.Success<List<Ad>> -> DiscoverMaterial3Carousel(
                     posts = state.data,
+                    modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_medium), end = dimensionResource(R.dimen.padding_medium)),
                     bottomPadding = paddingValues.calculateBottomPadding()
                 )
             }
@@ -295,7 +284,8 @@ fun ProfileCard(
     modifier: Modifier = Modifier,
 ) {
     Card(
-        modifier = modifier) {
+        modifier = modifier
+    ) {
 
         Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))) {
             Row(
@@ -381,11 +371,29 @@ fun AdCarousel(
         itemSpacing = itemSpacing,
         modifier = modifier
     )
+}
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AdMaterial3Carousel(
+    ads: List<Ad>,
+    modifier: Modifier = Modifier,
+    itemSpacing: Dp = dimensionResource(R.dimen.padding_small)
+) {
 
-
-
+    val state = rememberCarouselState(initialItem = ads.size / 2, itemCount = { ads.size })
+    Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        HorizontalCenteredHeroCarousel(
+            state = state,
+            content = { HeroAd(ad = ads[it]) },
+            modifier = modifier.clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small))),
+            itemSpacing = itemSpacing
+        )
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
+        DynamicCarouselIndicator(ads.size, state.currentItem)
     }
+}
+
 
 @Composable
 fun DiscoverPostCarousel(
@@ -400,6 +408,30 @@ fun DiscoverPostCarousel(
         bottomPadding = bottomPadding,
         modifier = modifier
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DiscoverMaterial3Carousel(
+    posts: List<Ad>,
+    modifier: Modifier = Modifier,
+    bottomPadding: Dp = 0.dp,
+    itemSpacing: Dp = dimensionResource(R.dimen.padding_small)
+) {
+    val state = rememberCarouselState(initialItem = posts.size / 2, itemCount = { posts.size })
+    Column(
+        modifier = Modifier.padding(bottom = bottomPadding),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally) {
+        HorizontalCenteredHeroCarousel(
+            state = state,
+            content = { DiscoverCard(post = posts[it]) },
+            modifier = modifier.clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small))),
+            itemSpacing = itemSpacing
+        )
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
+        DynamicCarouselIndicator(posts.size, state.currentItem)
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -493,15 +525,21 @@ fun <T> Carousel(
 
 @Composable
 fun DynamicCarouselIndicator(
-    size: Int, // Total number of items
+    size: Int,
     currentPage: Int,
     modifier: Modifier = Modifier,
-    maxVisibleIndicators: Int = 7, // Maximum number of indicators to show (including current)
+    maxVisibleIndicators: Int = 7,
     activeColor: Color = MaterialTheme.colorScheme.primary,
     inactiveColor: Color = Color.LightGray,
     indicatorSize: Dp = 8.dp,
     indicatorPadding: Dp = 4.dp,
 ) {
+
+    val hapticFeedback = LocalHapticFeedback.current
+    LaunchedEffect(currentPage) {
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    }
+
     Row(
         modifier = modifier
             .wrapContentHeight()
@@ -583,9 +621,11 @@ fun lerp(start: Float, stop: Float, fraction: Float): Float {
     return start + fraction * (stop - start)
 }
 
+
 @Composable
 fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.aspectRatio(1.5f)) {
+    Card(modifier = modifier.fillMaxWidth()
+        .aspectRatio(1.45f)) {
         Box(
             modifier = Modifier.fillMaxSize() // Box fills the Card
         ) {
@@ -624,20 +664,33 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
                 }
             )
 
-            // Text overlay
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter) // Position text at the bottom
-                    .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.5f)) // Semi-transparent dark background for readability
-                    .padding(dimensionResource(R.dimen.padding_small))
+            val roundedCornerShape: Shape = RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small)))
+            FrostedGlassBox(
+                shape = roundedCornerShape,
+                modifier = Modifier.align(Alignment.BottomCenter)
             ) {
                 Text(
                     text = post.description,
-                    color = Color.White, // White text for contrast against the dark background
+                    color = Color.Transparent,
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2, // Limit text lines to prevent overflow
-                    overflow = TextOverflow.Ellipsis // Add ellipsis if text is too long
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
+                )
+            }
+
+            // Text overlay
+            ClearGlassBox(
+                shape = roundedCornerShape,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                Text(
+                    text = post.description,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
                 )
             }
         }
@@ -671,21 +724,22 @@ fun CarouselItemSkeleton(
     }
 }
 
+@Preview
+@Composable
+fun CarouselItemSkeletonPreview() {
+    RedCableClubTheme {
+        Surface {
+            CarouselItemSkeleton()
+        }
+    }
+}
 
 
 @Composable
 fun AdCard(ad: Ad, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier) {
-        /*
-        Image(
-            painter = painterResource(id = ad.adImageId),
-            contentDescription = ad.description,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth()
-        )
 
-         */
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(ad.adImageUrl)
@@ -724,7 +778,70 @@ fun AdCard(ad: Ad, modifier: Modifier = Modifier) {
         )
         Text(text = ad.description, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)))
     }
+}
 
+@Composable
+fun HeroAd(ad: Ad, modifier: Modifier = Modifier) {
+    Box(modifier = modifier
+        .clip(RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small))))) {
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(ad.adImageUrl)
+                .crossfade(true)
+                .build(),
+            contentDescription = ad.description,
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+                .clip(RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small))))
+                .fillMaxWidth()
+                .aspectRatio(1.45f),
+            loading = {
+                Box(
+                    modifier = modifier
+                        .profileImageModifier()
+                        .shimmerLoadingAnimation()
+                )
+            },
+            error = { errorState ->
+                Log.e(
+                    "ProfileImageError",
+                    "Image loading failed for URL: $ad.adImageUrl",
+                    errorState.result.throwable
+                )
+
+                Box(
+                    modifier = modifier
+                        .profileImageModifier()
+                        .background(MaterialTheme.colorScheme.surfaceVariant), // Simple background for error
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Clear,
+                        contentDescription = "Image loading failed",
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxSize()
+                        // Adjust icon size
+                    )
+                }
+            }
+        )
+
+        val roundedCornerShape: Shape = RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small)))
+        FrostedGlassBox(
+            modifier = Modifier
+                .align(Alignment.BottomCenter),
+            shape = roundedCornerShape
+        ){
+            Text(
+                text = ad.description,
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
+            )
+        }
+    }
 }
 
 @Composable
@@ -1084,6 +1201,18 @@ fun DiscoverCarouselPreview() {
         Surface {
             DiscoverPostCarousel(
             posts = RedCableClubApiServiceMock.discoverPosts
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun AdMaterial3CarouselPreview() {
+    RedCableClubTheme(dynamicColor = false) {
+        Surface {
+            AdMaterial3Carousel(
+                ads = RedCableClubApiServiceMock.ads
             )
         }
     }
