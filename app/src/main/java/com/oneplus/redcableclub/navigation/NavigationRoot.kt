@@ -3,7 +3,9 @@ package com.oneplus.redcableclub.navigation
 
 
 
+import android.util.LayoutDirection
 import android.util.Log
+import android.view.Surface
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -16,6 +18,9 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.BottomAppBarDefaults
@@ -40,7 +45,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavEntry
@@ -54,6 +61,7 @@ import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.ui.screens.Achievements
 import com.oneplus.redcableclub.ui.screens.RedCableClub
 import com.oneplus.redcableclub.ui.screens.RedCableClubViewModel
+import com.oneplus.redcableclub.ui.utils.DetailWithLazyGridLayoutMode
 import com.oneplus.redcableclub.ui.utils.RedCableClubFloatingNavigationBar
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationBar
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationRail
@@ -83,6 +91,7 @@ data object ServiceDetailScreen: NavKey
 @Composable
 fun NavigationRoot(
     windowSizeClass: WindowSizeClass,
+    rotation: Int,
     modifier: Modifier = Modifier,
 ) {
     val redCableClubViewModel: RedCableClubViewModel = viewModel(factory = RedCableClubViewModel.Factory)
@@ -96,6 +105,7 @@ fun NavigationRoot(
 
     var topBarState by remember { mutableStateOf(TopBarState(R.string.app_name, showNavigateBack = false, icon = R.drawable.red_cable_club_icon)) }
     val insets = WindowInsets.systemBars
+    val layoutDirection = LocalLayoutDirection.current // Get current layout direction
 
     var mainContentSize by remember { mutableIntStateOf(0) }
 
@@ -139,15 +149,19 @@ fun NavigationRoot(
                 }
             }
         ) { innerPadding ->
-            Row(modifier = Modifier.padding(innerPadding)) {
-
+            Row() {
                     if (navigationType == RedCableClubNavigationType.NAVIGATION_RAIL) {
 
                             RedCableClubNavigationRail(
                                 isSelected = isScreenSelected,
                                 onSelected = onScreenSelected,
                                 modifier = Modifier
-                                    .padding(horizontal = dimensionResource(R.dimen.padding_small))
+                                    .fillMaxHeight()
+                                    .padding(
+                                        start = dimensionResource(R.dimen.padding_small),
+                                        top = innerPadding.calculateTopPadding(),
+                                        bottom = innerPadding.calculateBottomPadding()
+                                    )
                                     .onSizeChanged { size -> mainContentSize = size.width }
                             )
 
@@ -155,12 +169,27 @@ fun NavigationRoot(
                     } else { mainContentSize = 0}
 
                     RedCableClubNavDisplay(
-                        modifier = modifier,
+                        modifier = modifier
+                            .weight(1f) // Ensure NavDisplay takes remaining space
+                            .padding(
+                                start = if (navigationType == RedCableClubNavigationType.NAVIGATION_RAIL) {
+                                    // If rail is present, no additional start padding needed from innerPaddingScaffold,
+                                    // as the rail itself is already there. You might add a small fixed padding if desired.
+                                    0.dp // Or a small dimensionResource for spacing between rail and content
+                                } else {
+                                    // No rail, so content starts from the edge defined by innerPaddingScaffold
+                                    innerPadding.calculateStartPadding(layoutDirection)
+                                },
+                                top = innerPadding.calculateTopPadding(),
+                                end = innerPadding.calculateEndPadding(layoutDirection),
+                                bottom = innerPadding.calculateBottomPadding()
+                            ),
                         backStack = backStack,
                         onTopBarStateChange = { newTopBarState -> topBarState = newTopBarState },
                         uiState = uiState,
                         insets = insets,
-                        mainContentWidthInPx = mainContentSize
+                        mainContentWidthInPx = mainContentSize,
+                        rotation = rotation
                     )
 
             }
@@ -177,7 +206,8 @@ fun NavigationRoot(
                     onTopBarStateChange = { newTopBarState -> topBarState = newTopBarState },
                     uiState = uiState,
                     insets = insets,
-                    mainContentWidthInPx = mainContentSize
+                    mainContentWidthInPx = mainContentSize,
+                    rotation = rotation
                 )
             }
         )
@@ -202,6 +232,7 @@ fun RedCableClubNavDisplay(
     uiState: com.oneplus.redcableclub.ui.screens.RedCableClubUiState,
     insets: WindowInsets,
     mainContentWidthInPx: Int,
+    rotation: Int
 ) {
     NavDisplay(
         modifier = modifier,
@@ -239,8 +270,13 @@ fun RedCableClubNavDisplay(
                             isNavigatingBack = true
                         ))
                         Achievements(
-                            achievements = (uiState.userProfileState as ResourceState.Success<UserProfile>).data.achievements,
+                            achievements = (
+                                    uiState.userProfileState as ResourceState.Success<UserProfile>
+                                    ).data.achievements,
+                           layoutMode = if(Surface.ROTATION_0 == rotation) DetailWithLazyGridLayoutMode.COLLAPSING_VERTICAL else DetailWithLazyGridLayoutMode.SIDE_BY_SIDE_HORIZONTAL
                         )
+
+
                     }
                 }
                 else -> {

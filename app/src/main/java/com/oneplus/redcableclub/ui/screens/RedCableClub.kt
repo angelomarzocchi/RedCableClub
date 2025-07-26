@@ -8,7 +8,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,7 +27,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -41,33 +39,33 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.carousel.HorizontalCenteredHeroCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -92,11 +90,9 @@ import com.oneplus.redcableclub.data.model.MembershipTier
 import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
-import com.oneplus.redcableclub.ui.utils.ClearGlassBox
-import com.oneplus.redcableclub.ui.utils.FadingEdgeSide
 import com.oneplus.redcableclub.ui.utils.FrostedGlassBox
 import com.oneplus.redcableclub.ui.utils.ResourceState
-import com.oneplus.redcableclub.ui.utils.fadingEdge
+import com.oneplus.redcableclub.ui.utils.RotatingBackgroundButton
 import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
 import kotlin.math.absoluteValue
 import kotlin.math.max
@@ -277,6 +273,7 @@ fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ProfileCard(
     profile: UserProfile,
@@ -317,11 +314,24 @@ fun ProfileCard(
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
             Row(
                 horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.cake_icon),
-                    contentDescription = null)
+                Box(
+                    modifier = Modifier
+                        .size(dimensionResource(id = R.dimen.badge_size))
+                        .clip(MaterialShapes.Sunny.toShape())
+                        .background(MaterialTheme.colorScheme.tertiaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.cake_icon),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
+                Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_small)))
+
                 Text(
                     text = stringResource(R.string.birthday,  profile.birthday ),
                     style = MaterialTheme.typography.bodyMedium,
@@ -381,7 +391,7 @@ fun AdMaterial3Carousel(
     itemSpacing: Dp = dimensionResource(R.dimen.padding_small)
 ) {
 
-    val state = rememberCarouselState(initialItem = ads.size / 2, itemCount = { ads.size })
+    val state = rememberCarouselState(initialItem = 0, itemCount = { ads.size })
     Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
         HorizontalCenteredHeroCarousel(
             state = state,
@@ -624,8 +634,11 @@ fun lerp(start: Float, stop: Float, fraction: Float): Float {
 
 @Composable
 fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.fillMaxWidth()
-        .aspectRatio(1.45f)) {
+    Card(
+        modifier = modifier.fillMaxWidth()
+        .aspectRatio(1.45f)
+    )
+         {
         Box(
             modifier = Modifier.fillMaxSize() // Box fills the Card
         ) {
@@ -671,21 +684,6 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
             ) {
                 Text(
                     text = post.description,
-                    color = Color.Transparent,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
-                )
-            }
-
-            // Text overlay
-            ClearGlassBox(
-                shape = roundedCornerShape,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            ) {
-                Text(
-                    text = post.description,
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 2,
@@ -693,6 +691,8 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
                     modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
                 )
             }
+
+
         }
     }
 }
@@ -856,37 +856,59 @@ fun CouponHorizontalListSkeleton(modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CouponHorizontalList(coupons: List<Coupon>,modifier: Modifier = Modifier) {
-    val lazyListState = rememberLazyListState()
-    val canScrollLeft = lazyListState.canScrollBackward
-    val canScrollRight = lazyListState.canScrollForward
-
-
-
     val smallPadding = dimensionResource(R.dimen.padding_small)
 
-    LazyRow(
-        state = lazyListState,
+    Row(
         horizontalArrangement = Arrangement.spacedBy(smallPadding),
         modifier = modifier
             .padding(dimensionResource(R.dimen.padding_small))
-            .fadingEdge(
-                side = FadingEdgeSide.Start,
-                width = 20.dp,
-                isVisible = canScrollLeft
-            )
-            .fadingEdge(
-                side = FadingEdgeSide.End,
-                width = 20.dp,
-                isVisible = canScrollRight
-            )
-    )  {
-
-        items(coupons.size) { index ->
+            .fillMaxWidth() // Ensure Row takes full width for arrangement
+    ) {
+        // Display up to 3 coupons
+        coupons.take(3).forEach { coupon ->
             CouponElement(
-                coupon = coupons[index],
+                coupon = coupon,
+                modifier = Modifier.weight(1f) // Distribute space equally
             )
+        }
+
+        // Show "Show All" icon if there are more coupons or if the list is empty and we want to show it anyway
+        if (coupons.size > 3 || coupons.isEmpty()) { // Adjusted condition
+            val iconSize = (dimensionResource(R.dimen.coupon_size).value * 1.4).dp
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .weight(1f) // Distribute space equally
+                    .widthIn(max = iconSize * 1.5f) // Constrain width
+            ) {
+               RotatingBackgroundButton(
+                   onClick = {},
+                   modifier = Modifier.size(iconSize),
+                   icon = {
+                       Icon(
+                           painter = painterResource(R.drawable.coupon_icon),
+                           contentDescription = stringResource(R.string.show_all),
+                           tint = MaterialTheme.colorScheme.onPrimary
+                       )
+                   },
+                   shape = MaterialShapes.Cookie12Sided.toShape(),
+                   backgroundColor = MaterialTheme.colorScheme.primary
+               )
+
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_extra_small)))
+                Text(
+                    text = stringResource(R.string.show_all),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.widthIn(max = iconSize * 1.5f),
+                    textAlign = TextAlign.Center // Center the text for better balance
+                )
+            }
         }
     }
 }
@@ -938,10 +960,12 @@ fun CouponElementSkeleton(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CouponElement(
     coupon: Coupon,
     modifier: Modifier = Modifier,
+    icon: ImageVector = Icons.Filled.LocalOffer,
     iconSize: Dp = dimensionResource(R.dimen.coupon_size)
 
 ) {
@@ -954,12 +978,13 @@ fun CouponElement(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(iconSize)
-                .background(MaterialTheme.colorScheme.primary, CircleShape) // Add a subtle background
+                .clip(MaterialShapes.Cookie4Sided.toShape())
+                .background(MaterialTheme.colorScheme.secondary, CircleShape) // Add a subtle background
         ) {
             Icon(
-                imageVector = Icons.Filled.LocalOffer,
+                imageVector = icon,
                 contentDescription = coupon.description,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
+                tint = MaterialTheme.colorScheme.onSecondary
             )
         }
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_extra_small)))
