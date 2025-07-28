@@ -3,9 +3,7 @@ package com.oneplus.redcableclub.navigation
 
 
 
-import android.util.LayoutDirection
 import android.util.Log
-import android.view.Surface
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -26,13 +24,9 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.FloatingToolbarExitDirection
-import androidx.compose.material3.FloatingToolbarState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomAppBarState
-import androidx.compose.material3.rememberFloatingToolbarState
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
@@ -57,12 +51,13 @@ import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
 import com.oneplus.redcableclub.R
-import com.oneplus.redcableclub.data.model.UserProfile
+import com.oneplus.redcableclub.data.model.Achievement
 import com.oneplus.redcableclub.ui.screens.Achievements
+import com.oneplus.redcableclub.ui.screens.AchievementsUiState
+import com.oneplus.redcableclub.ui.screens.AchievementsViewModel
 import com.oneplus.redcableclub.ui.screens.RedCableClub
+import com.oneplus.redcableclub.ui.screens.RedCableClubUiState
 import com.oneplus.redcableclub.ui.screens.RedCableClubViewModel
-import com.oneplus.redcableclub.ui.utils.DetailWithLazyGridLayoutMode
-import com.oneplus.redcableclub.ui.utils.RedCableClubFloatingNavigationBar
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationBar
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationRail
 import com.oneplus.redcableclub.ui.utils.RedCableClubPermanentNavigationDrawer
@@ -91,12 +86,13 @@ data object ServiceDetailScreen: NavKey
 @Composable
 fun NavigationRoot(
     windowSizeClass: WindowSizeClass,
-    rotation: Int,
     modifier: Modifier = Modifier,
 ) {
     val redCableClubViewModel: RedCableClubViewModel = viewModel(factory = RedCableClubViewModel.Factory)
+    val achievementsViewModel: AchievementsViewModel = viewModel(factory = AchievementsViewModel.Factory)
 
-    val uiState by redCableClubViewModel.uiState.collectAsState()
+    val redCableClubUiState by redCableClubViewModel.uiState.collectAsState()
+    val achievementsUiState by achievementsViewModel.uiState.collectAsState()
 
     val backStack = rememberNavBackStack(RedCableClubScreen)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
@@ -186,10 +182,11 @@ fun NavigationRoot(
                             ),
                         backStack = backStack,
                         onTopBarStateChange = { newTopBarState -> topBarState = newTopBarState },
-                        uiState = uiState,
+                        redCableClubUiState = redCableClubUiState,
+                        achievementsUiState = achievementsUiState,
+                        onAchievementSelected = {achievementsViewModel.selectAchievement(it)},
                         insets = insets,
                         mainContentWidthInPx = mainContentSize,
-                        rotation = rotation
                     )
 
             }
@@ -204,10 +201,11 @@ fun NavigationRoot(
                     modifier = modifier,
                     backStack = backStack,
                     onTopBarStateChange = { newTopBarState -> topBarState = newTopBarState },
-                    uiState = uiState,
+                    redCableClubUiState = redCableClubUiState,
+                    achievementsUiState = achievementsUiState,
+                    onAchievementSelected = {achievementsViewModel.selectAchievement(it)},
                     insets = insets,
-                    mainContentWidthInPx = mainContentSize,
-                    rotation = rotation
+                    mainContentWidthInPx = mainContentSize
                 )
             }
         )
@@ -229,10 +227,11 @@ fun RedCableClubNavDisplay(
     modifier: Modifier,
     backStack: androidx.navigation3.runtime.NavBackStack,
     onTopBarStateChange: (TopBarState) -> Unit,
-    uiState: com.oneplus.redcableclub.ui.screens.RedCableClubUiState,
+    redCableClubUiState: RedCableClubUiState,
+    achievementsUiState: AchievementsUiState,
+    onAchievementSelected: (Achievement) -> Unit,
     insets: WindowInsets,
     mainContentWidthInPx: Int,
-    rotation: Int
 ) {
     NavDisplay(
         modifier = modifier,
@@ -249,7 +248,7 @@ fun RedCableClubNavDisplay(
                         Log.d("NavigationRoot", "RedCableClubScreen")
                         onTopBarStateChange(TopBarState(R.string.app_name, showNavigateBack = false, icon = R.drawable.red_cable_club_icon))
                         RedCableClub(
-                            uiState = uiState,
+                            uiState = redCableClubUiState,
                             onAchievementDetailClick = {
                                 backStack.addLast(AchievementScreen)
                             },
@@ -271,9 +270,12 @@ fun RedCableClubNavDisplay(
                         ))
                         Achievements(
                             achievements = (
-                                    uiState.userProfileState as ResourceState.Success<UserProfile>
-                                    ).data.achievements,
-                           layoutMode = if(Surface.ROTATION_0 == rotation) DetailWithLazyGridLayoutMode.COLLAPSING_VERTICAL else DetailWithLazyGridLayoutMode.SIDE_BY_SIDE_HORIZONTAL
+                                    achievementsUiState.achievementsUiState as ResourceState.Success<List<Achievement>>
+                                    ).data,
+                            selectedAchievement = achievementsUiState.selectedAchievement,
+                            onItemSelected = { achievement ->
+                                onAchievementSelected(achievement)
+                            },
                         )
 
 

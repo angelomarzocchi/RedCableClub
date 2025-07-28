@@ -1,5 +1,6 @@
 package com.oneplus.redcableclub.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -25,18 +26,26 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,8 +73,7 @@ private val MinHeaderHeight = 120.dp
 private val BadgeSizeExtraLarge = 120.dp
 private val BadgeSizeSmall = 52.dp
 
-private val NameTextSizeExpanded = 32.sp
-private val NameTextSizeCollapsed = 24.sp
+
 
 
 
@@ -74,17 +82,28 @@ private val NameTextSizeCollapsed = 24.sp
 @Composable
 fun Achievements(
     achievements: List<Achievement>,
+    selectedAchievement: Achievement?,
+    onItemSelected: (Achievement) -> Unit,
     modifier: Modifier = Modifier,
-    paddingValues: PaddingValues = PaddingValues(0.dp),
-    layoutMode: DetailWithLazyGridLayoutMode = DetailWithLazyGridLayoutMode.COLLAPSING_VERTICAL
+    paddingValues: PaddingValues = PaddingValues(0.dp)
 ) {
-   var currentSelectedAchievement: Achievement? by remember { mutableStateOf(achievements.firstOrNull())}
+
+    val configuration = LocalConfiguration.current
+    val currentLayoutMode = if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        DetailWithLazyGridLayoutMode.SIDE_BY_SIDE_HORIZONTAL
+    } else {
+        DetailWithLazyGridLayoutMode.COLLAPSING_VERTICAL
+    }
+
+
+
+
 
     CollapsingToolbarWithLazyGrid(
         items = achievements,
-        layoutMode = layoutMode,
-        initialSelectedItem = currentSelectedAchievement,
-        onItemSelected = { achievement -> currentSelectedAchievement = achievement},
+        layoutMode = currentLayoutMode,
+        selectedItem = selectedAchievement,
+        onItemSelected = { achievement -> onItemSelected(achievement)},
         detailContent = {item, collapseProgress, isExpanded, animatedVisibilityScope ->
             AchievementDetail(
                 achievement = item,
@@ -112,16 +131,16 @@ private val DefaultNameTextSizeCollapsed = 24.sp
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AchievementDetail(
-   sharedTransitionScope: SharedTransitionScope,
-   animatedVisibilityScope: AnimatedVisibilityScope,
-   achievement: Achievement,
-   collapseProgress: Float,
-   modifier: Modifier = Modifier,
-   isExpanded: Boolean = false,
-   badgeSizeExtraLarge: Dp = BadgeSizeExtraLarge,
-   badeSizeSmall: Dp = BadgeSizeSmall,
-   nameTextSizeExpanded: TextUnit = DefaultNameTextSizeExpanded,
-   nameTextSizeCollapsed: TextUnit = DefaultNameTextSizeCollapsed
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    achievement: Achievement?,
+    collapseProgress: Float,
+    modifier: Modifier = Modifier,
+    isExpanded: Boolean = false,
+    badgeSizeExtraLarge: Dp = BadgeSizeExtraLarge,
+    badeSizeSmall: Dp = BadgeSizeSmall,
+    nameTextSizeExpanded: TextUnit = DefaultNameTextSizeExpanded,
+    nameTextSizeCollapsed: TextUnit = DefaultNameTextSizeCollapsed,
 ) {
     with(sharedTransitionScope) {
         val animatedImageSize: Dp by remember(
@@ -141,6 +160,13 @@ fun AchievementDetail(
             derivedStateOf {
                 lerp(nameTextSizeCollapsed, nameTextSizeExpanded, collapseProgress)
             }
+        }
+
+        if(achievement == null) {
+            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No achievement selected.")
+            }
+            return
         }
 
         val iconSharedKey =
@@ -283,12 +309,13 @@ private fun ErrorIcon(size: Dp) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Achievement(
     achievement: Achievement,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    size: Dp = dimensionResource(R.dimen.badge_size_large)
+    size: Dp = dimensionResource(R.dimen.badge_size_large),
 ) {
     Column(
         verticalArrangement = Arrangement.Center,
@@ -303,6 +330,7 @@ fun Achievement(
             contentDescription = achievement.description,
             modifier = modifier
                 .padding(dimensionResource(R.dimen.padding_small))
+                .clip(MaterialShapes.Square.toShape())
                 .size(size)
                 .clickable(onClick = onClick),
             loading = {
@@ -343,7 +371,9 @@ fun AchievementScreenPreview() {
     RedCableClubTheme {
         Surface {
             Achievements(
-                achievements = RedCableClubApiServiceMock.userMock.achievements
+                achievements = RedCableClubApiServiceMock.userMock.achievements,
+                selectedAchievement = RedCableClubApiServiceMock.userMock.achievements[0],
+                onItemSelected = {}
             )
         }
     }
@@ -356,7 +386,8 @@ fun AchievementScreenPreviewHorizontal() {
         Surface {
             Achievements(
                 achievements = RedCableClubApiServiceMock.userMock.achievements,
-                layoutMode = DetailWithLazyGridLayoutMode.SIDE_BY_SIDE_HORIZONTAL
+                selectedAchievement = RedCableClubApiServiceMock.userMock.achievements[0],
+                onItemSelected = {}
             )
         }
     }

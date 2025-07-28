@@ -62,7 +62,7 @@ private val DefaultSideDetailWidth = 300.dp
 @Composable
 fun <T> CollapsingToolbarWithLazyGrid(
     items: List<T>,
-    initialSelectedItem: T?,
+    selectedItem: T?,
     onItemSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     layoutMode: DetailWithLazyGridLayoutMode = DetailWithLazyGridLayoutMode.COLLAPSING_VERTICAL,
@@ -88,14 +88,14 @@ fun <T> CollapsingToolbarWithLazyGrid(
             onClick: () -> Unit
             ) -> Unit
     ) {
-    if(items.isEmpty() && initialSelectedItem == null) {
+    if(items.isEmpty() && selectedItem == null) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("No items to display.") // Or a more sophisticated empty state
         }
         return
     }
 
-    var selectedItem: T? by remember { mutableStateOf(initialSelectedItem ?: items.firstOrNull())}
+
     val density = LocalDensity.current
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
@@ -259,7 +259,8 @@ fun <T> CollapsingToolbarWithLazyGrid(
                                 val item = items[index]
                                 this@SharedTransitionLayout.gridItemContent(
                                     item,
-                                    { onItemSelected(item) }
+                                    { onItemSelected(item)
+                                    }
                                 )
                             }
                         }
@@ -281,7 +282,7 @@ fun CollapsingToolbarWithLazyGridPreview() {
 
     CollapsingToolbarWithLazyGrid(
         items = items,
-        initialSelectedItem = selectedItem,
+        selectedItem = selectedItem,
         onItemSelected = { item -> selectedItem = item },
         detailContent = { item, collapseProgress, isExpanded, _ ->
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -316,7 +317,7 @@ private fun CollapsingToolbarWithLazyGridPreviewHorizontal() {
 
     CollapsingToolbarWithLazyGrid(
         items = items,
-        initialSelectedItem = selectedItem,
+        selectedItem = selectedItem,
         onItemSelected = { item -> selectedItem = item },
         layoutMode = DetailWithLazyGridLayoutMode.SIDE_BY_SIDE_HORIZONTAL,
         detailContent = { item, collapseProgress, isExpanded, _ ->

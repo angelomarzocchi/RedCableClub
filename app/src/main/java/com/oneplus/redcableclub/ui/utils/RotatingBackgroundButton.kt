@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.ripple
@@ -52,6 +53,7 @@ fun RotatingBackgroundButton(
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
+            .background(Color.Transparent)
             .clip(shape)
             .clickable(
                 onClick = {
@@ -73,6 +75,8 @@ fun RotatingBackgroundButton(
         )
         icon()
     }
+
+
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

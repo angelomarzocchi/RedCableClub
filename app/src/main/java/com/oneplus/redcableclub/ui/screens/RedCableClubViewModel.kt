@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 data class RedCableClubUiState(
      val adsState: ResourceState<List<Ad>> = ResourceState.Loading,
      val discoveryState: ResourceState<List<Ad>> = ResourceState.Loading,
-     val userProfileState: ResourceState<UserProfile> = ResourceState.Loading
+     val userProfileState: ResourceState<UserProfile> = ResourceState.Loading,
 )
 
 
@@ -33,6 +33,7 @@ class RedCableClubViewModel(
         private val _uiState = MutableStateFlow(RedCableClubUiState())
     val uiState: StateFlow<RedCableClubUiState> = _uiState.asStateFlow()
 
+    //TODO remove from here and find a way to get this from login when it will be implemented
     private val currentUserId = "AngeloMarzo"
 
     init {
@@ -46,7 +47,7 @@ class RedCableClubViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(userProfileState = ResourceState.Loading) }
             try {
-                val userProfile = userProfileRepository.getUserProfile(username)
+                val userProfile = userProfileRepository.getUserProfile(username, forceRefresh = true)
                 _uiState.update { it.copy(userProfileState = ResourceState.Success(userProfile)) }
         } catch (e: Exception) {
             _uiState.update { it.copy(userProfileState = ResourceState.Error(e.message)) }
@@ -79,6 +80,8 @@ class RedCableClubViewModel(
             }
         }
     }
+
+
 
 
 

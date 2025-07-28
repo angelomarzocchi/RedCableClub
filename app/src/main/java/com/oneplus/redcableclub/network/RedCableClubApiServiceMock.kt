@@ -58,16 +58,19 @@ class RedCableClubApiServiceMock(): RedCableClubApiService {
             ),
             achievements = listOf(
                 Achievement(
+                    id = 1001,
                     name = "OnePlus 13",
                     description = "Pro. Everywhere.",
                     iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_13)
                 ),
                 Achievement(
+                    id = 1002,
                     name = "OnePlus 12",
                     description = "Smooth Beyond Belief",
                     iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_12)
                 ),
                 Achievement(
+                    id = 1003,
                     name = "11th Anniversary Celebration",
                     description = "Happy 11th Birthday OnePlus",
                     iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_11th_anniversary_celebration)
