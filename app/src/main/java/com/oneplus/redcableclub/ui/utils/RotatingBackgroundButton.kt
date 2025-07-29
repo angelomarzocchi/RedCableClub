@@ -4,10 +4,7 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -15,14 +12,12 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
-import androidx.compose.material3.ripple
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -50,33 +45,24 @@ fun RotatingBackgroundButton(
     )
     val interactionSource = remember { MutableInteractionSource() }
 
-    Box(
-        contentAlignment = Alignment.Center,
+
+    FilledIconButton(
+        onClick = {
+            // Determine the next rotation angle
+            // This allows for continuous rotation or toggling back
+            rotationAngle += targetRotationOnClick // Or use your previous toggle logic if preferred
+            // Example toggle:
+            // rotationAngle = if (rotationAngle == targetRotationOnClick) initialRotation else targetRotationOnClick
+            onClick()
+        },
         modifier = modifier
-            .background(Color.Transparent)
+            .graphicsLayer {
+                rotationZ = animatedRotationAngle
+            }
             .clip(shape)
-            .clickable(
-                onClick = {
-                    rotationAngle = if(rotationAngle == targetRotationOnClick) initialRotation else targetRotationOnClick
-                    onClick()
-                },
-                interactionSource = interactionSource,
-                indication = ripple()
-            )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    rotationZ = animatedRotationAngle
-                }
-                .clip(shape)
-                .background(backgroundColor)
-        )
-        icon()
-    }
-
-
+            .background(backgroundColor)
+            ,
+    ) { icon() }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

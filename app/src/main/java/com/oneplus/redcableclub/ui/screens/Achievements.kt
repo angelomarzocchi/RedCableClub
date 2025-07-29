@@ -321,7 +321,6 @@ fun Achievement(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-
         SubcomposeAsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(achievement.iconUrl)
@@ -330,7 +329,6 @@ fun Achievement(
             contentDescription = achievement.description,
             modifier = modifier
                 .padding(dimensionResource(R.dimen.padding_small))
-                .clip(MaterialShapes.Square.toShape())
                 .size(size)
                 .clickable(onClick = onClick),
             loading = {

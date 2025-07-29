@@ -65,16 +65,60 @@ class RedCableClubApiServiceMock(): RedCableClubApiService {
                 ),
                 Achievement(
                     id = 1002,
+                    name = "OnePlus 13R",
+                    description = "Pro. Everywhere.",
+                    iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_13r)
+                ),
+                Achievement(
+                    id = 1003,
                     name = "OnePlus 12",
                     description = "Smooth Beyond Belief",
                     iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_12)
                 ),
                 Achievement(
-                    id = 1003,
+                    id = 1004,
+                    name = "OnePlus 12R",
+                    description = "Smooth Beyond Belief",
+                    iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_12r)
+                ),
+                Achievement(
+                    id = 1005,
                     name = "11th Anniversary Celebration",
                     description = "Happy 11th Birthday OnePlus",
                     iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_11th_anniversary_celebration)
-                )
+                ),
+                Achievement(
+                    id = 1006,
+                    name = "OnePlus Nord 4",
+                    description = "Absurdly Good",
+                    iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_nord_4)
+                ),
+                Achievement(
+                    id = 1007,
+                    name = "OnePlus Nord CE4 Lite 5G",
+                    description = "Absurdly Entertaining",
+                    iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_nord_ce4_lite_5g)
+                ),
+                Achievement(
+                    id = 1008,
+                    name = "OnePlus Open",
+                    description = "Open for Everything",
+                    iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_open)
+                ),
+                Achievement(
+                    id = 1009,
+                    name = "OnePlus 10T",
+                    description = "Evolve Beyond Speed",
+                    iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_10t)
+                ),
+                Achievement(
+                    id = 10010,
+                    name = "OnePlus 10 Pro",
+                    description = "Capture Every Horizon",
+                    iconUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.oneplus_10_pro)
+                ),
+
+
             )
         )
 
