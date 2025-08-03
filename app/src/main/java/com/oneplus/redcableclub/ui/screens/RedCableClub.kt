@@ -204,6 +204,7 @@ fun ProfileCardError(modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
     Card(
@@ -247,11 +248,22 @@ fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_medium)))
             Row(
                 horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.cake_icon),
-                    contentDescription = null)
+                Box(
+                    modifier = Modifier
+                        .size(dimensionResource(id = R.dimen.badge_size))
+                        .clip(MaterialShapes.Sunny.toShape())
+                        .background(MaterialTheme.colorScheme.tertiaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.cake_icon),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
                 Text(
                     text = "dd-mm-yyyy",
                     style = MaterialTheme.typography.bodyMedium,
@@ -844,15 +856,53 @@ fun HeroAd(ad: Ad, modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CouponHorizontalListSkeleton(modifier: Modifier = Modifier) {
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
-        modifier = modifier.padding(dimensionResource(R.dimen.padding_small))
+    val smallPadding = dimensionResource(R.dimen.padding_small)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(smallPadding),
+        modifier = modifier
+            .padding(dimensionResource(R.dimen.padding_small))
+            .fillMaxWidth() // Ensure Row takes full width for arrangement
     ) {
-        items(5) {
+        for (i in 1..3) {
             CouponElementSkeleton()
         }
+        val iconSize = (dimensionResource(R.dimen.coupon_size).value * 1.4).dp
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .weight(1f) // Distribute space equally
+                .widthIn(max = iconSize * 1.5f) // Constrain width
+        ) {
+            RotatingBackgroundButton(
+                enabled = false,
+                onClick = {},
+                modifier = Modifier.size(iconSize),
+                icon = {
+                    Icon(
+                        painter = painterResource(R.drawable.coupon_icon),
+                        contentDescription = stringResource(R.string.show_all),
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                },
+                shape = MaterialShapes.Cookie12Sided.toShape(),
+                backgroundColor = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_extra_small)))
+            Text(
+                text = stringResource(R.string.show_all),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.widthIn(max = iconSize * 1.5f),
+                textAlign = TextAlign.Center // Center the text for better balance
+            )
+        }
+
     }
 }
 
@@ -913,9 +963,11 @@ fun CouponHorizontalList(coupons: List<Coupon>,modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun CouponElementSkeleton(
     modifier: Modifier = Modifier,
+    icon: ImageVector = Icons.Filled.LocalOffer,
     iconSize: Dp = dimensionResource(R.dimen.coupon_size)
 ) {
 
@@ -928,17 +980,11 @@ fun CouponElementSkeleton(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(iconSize)
-                .background(MaterialTheme.colorScheme.primary, CircleShape)
+                .clip(MaterialShapes.Cookie4Sided.toShape())
+                .background(MaterialTheme.colorScheme.surfaceContainerLow, CircleShape) // Add a subtle background
+                .shimmerLoadingAnimation()
         ) {
-            Box(
-                modifier = Modifier
-                    .size(iconSize)
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
-                        shape = CircleShape
-                    )
-                    .shimmerLoadingAnimation()
-            )
+
         }
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_extra_small)))
         Text(
@@ -1085,7 +1131,7 @@ fun BadgesRow(
         verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
 
 
-        for( achievement in achievements.take(3)) {
+        for( achievement in achievements.filter{it -> it.isAchieved}.take(3)) {
 
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)

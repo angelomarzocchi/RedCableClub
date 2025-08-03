@@ -9,4 +9,6 @@
     <string name="red_coins_shop">Red Coins</string>
     <string name="service_detail">Service</string>
     <string name="show_all">Show All</string>
+    <string name="locked_badge">Link device to claim the badge</string>
+    <string name="no_achievement">Achievement could not be loaded</string>
 </resources>

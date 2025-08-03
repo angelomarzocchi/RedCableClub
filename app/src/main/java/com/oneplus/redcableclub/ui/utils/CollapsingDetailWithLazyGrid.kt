@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +29,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -60,7 +62,7 @@ private val DefaultSideDetailWidth = 300.dp
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun <T> CollapsingToolbarWithLazyGrid(
+fun <T> CollapsingDetailWithLazyGrid(
     items: List<T>,
     selectedItem: T?,
     onItemSelected: (T) -> Unit,
@@ -130,15 +132,14 @@ fun <T> CollapsingToolbarWithLazyGrid(
                     }
                 }
 
-                Scaffold(
+                Surface(
                     modifier = scaffoldModifier
                         .fillMaxSize()
                         .nestedScroll(nestedScrollConnection)
-                ) { scaffoldPaddingValues ->
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(scaffoldPaddingValues)
                     ) {
                         //Collapsible Header Section
                         Box(
@@ -181,6 +182,7 @@ fun <T> CollapsingToolbarWithLazyGrid(
                                 }
                             }
                         } //end box
+
                         LazyVerticalGrid(
                             columns = gridColumns,
                             state = gridState,
@@ -280,7 +282,7 @@ fun CollapsingToolbarWithLazyGridPreview() {
     val items = List(10) { "Item $it" }
     var selectedItem by remember { mutableStateOf<String?>(items.firstOrNull()) }
 
-    CollapsingToolbarWithLazyGrid(
+    CollapsingDetailWithLazyGrid(
         items = items,
         selectedItem = selectedItem,
         onItemSelected = { item -> selectedItem = item },
@@ -315,7 +317,7 @@ private fun CollapsingToolbarWithLazyGridPreviewHorizontal() {
     val items = List(18) { "Item $it" }
     var selectedItem by remember { mutableStateOf<String?>(items.firstOrNull()) }
 
-    CollapsingToolbarWithLazyGrid(
+    CollapsingDetailWithLazyGrid(
         items = items,
         selectedItem = selectedItem,
         onItemSelected = { item -> selectedItem = item },

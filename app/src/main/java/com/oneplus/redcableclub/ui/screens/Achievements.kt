@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,28 +28,24 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -62,20 +60,12 @@ import com.oneplus.redcableclub.R
 import com.oneplus.redcableclub.data.model.Achievement
 import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
-import com.oneplus.redcableclub.ui.utils.CollapsingToolbarWithLazyGrid
+import com.oneplus.redcableclub.ui.utils.CollapsingDetailWithLazyGrid
 import com.oneplus.redcableclub.ui.utils.DetailWithLazyGridLayoutMode
 import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
 
-// Define constants for header heights
-private val MaxHeaderHeight = 280.dp
-private val MinHeaderHeight = 120.dp
-
 private val BadgeSizeExtraLarge = 120.dp
-private val BadgeSizeSmall = 52.dp
-
-
-
-
+private val BadgeSizeSmall = 70.dp
 
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -96,10 +86,7 @@ fun Achievements(
     }
 
 
-
-
-
-    CollapsingToolbarWithLazyGrid(
+    CollapsingDetailWithLazyGrid(
         items = achievements,
         layoutMode = currentLayoutMode,
         selectedItem = selectedAchievement,
@@ -120,7 +107,6 @@ fun Achievements(
             )
         },
         modifier = modifier,
-        scaffoldModifier = Modifier.padding(top = paddingValues.calculateTopPadding()),
     )
 
 }
@@ -142,150 +128,107 @@ fun AchievementDetail(
     nameTextSizeExpanded: TextUnit = DefaultNameTextSizeExpanded,
     nameTextSizeCollapsed: TextUnit = DefaultNameTextSizeCollapsed,
 ) {
-    with(sharedTransitionScope) {
-        val animatedImageSize: Dp by remember(
-            collapseProgress,
-            badeSizeSmall,
-            badgeSizeExtraLarge
-        ) {
-            derivedStateOf {
-                lerp(badeSizeSmall, badgeSizeExtraLarge, collapseProgress)
-            }
+    if(achievement == null) {
+        Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text( text = stringResource(R.string.no_achievement))
         }
-        val animatedNameTextSize: TextUnit by remember(
-            collapseProgress,
-            nameTextSizeCollapsed,
-            nameTextSizeExpanded
-        ) {
-            derivedStateOf {
-                lerp(nameTextSizeCollapsed, nameTextSizeExpanded, collapseProgress)
-            }
+        return
+    }
+
+    val currentBadgeSize by remember(collapseProgress) {
+        derivedStateOf {
+            lerp(BadgeSizeSmall, BadgeSizeExtraLarge, collapseProgress)
         }
+    }
 
-        if(achievement == null) {
-            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No achievement selected.")
-            }
-            return
-        }
 
-        val iconSharedKey =
-            "achievement-icon-${achievement.iconUrl}" // Assuming Achievement has a stable `id`
-        val nameSharedKey = "achievement-name-${achievement.name}"
 
-        if(isExpanded) {
-            Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(dimensionResource(R.dimen.padding_medium)), // Consistent padding
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                SubcomposeAsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(achievement.iconUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = achievement.description,
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(dimensionResource(R.dimen.padding_medium)),
+        contentAlignment = Alignment.Center
+    ) {
+        with(sharedTransitionScope) {
+            if (isExpanded) {
+                Column(
                     modifier = Modifier
-                        .size(animatedImageSize)
-                        .sharedElement(
-                            rememberSharedContentState(key = iconSharedKey),
-                            animatedVisibilityScope = animatedVisibilityScope // CRUCIAL
-                        ),
-                    loading = {
-                        Box(
-                            modifier = Modifier
-                                .size(animatedImageSize)
-                                .shimmerLoadingAnimation()
-                        )
-                    },
-                    error = { ErrorIcon(size = animatedImageSize) }
-                )
-
-                Spacer(Modifier.height(dimensionResource(R.dimen.padding_small)))
-
-                Text(
-                    text = achievement.name,
-                    style = MaterialTheme.typography.displaySmall.copy(fontSize = animatedNameTextSize),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    autoSize = TextAutoSize.StepBased(
-                        minFontSize = nameTextSizeCollapsed,maxFontSize = nameTextSizeExpanded),
-                    modifier = Modifier.sharedElement(
-                        rememberSharedContentState(key = nameSharedKey),
-                        animatedVisibilityScope = animatedVisibilityScope // CRUCIAL
-                    )
-                )
-
-                AnimatedVisibility(
-                    visible = collapseProgress > 0.8f, // Show when mostly expanded
-                    enter = fadeIn(animationSpec = tween(durationMillis = 300, delayMillis = 100)) +
-                            slideInVertically(
-                                initialOffsetY = { it / 2 },
-                                animationSpec = tween(durationMillis = 300, delayMillis = 100)
-                            ),
-                    exit = fadeOut(animationSpec = tween(durationMillis = 300)) +
-                            slideOutVertically(
-                                targetOffsetY = { it / 2 },
-                                animationSpec = tween(durationMillis = 300)
-                            )
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
+
+                    AchievementImage(
+                        achievement = achievement,
+                        modifier = modifier.sharedElement(
+                            rememberSharedContentState(key = "achievement_image"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                        onClick = { },
+                        size = currentBadgeSize
+                    )
+
+
                     Text(
-                        text = achievement.description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 3, // Allow more lines in expanded view
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = dimensionResource(R.dimen.padding_extra_small))
+                        modifier = Modifier.sharedElement(
+                            rememberSharedContentState(key = "achievement_name"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                        text = achievement.name,
+                        autoSize = TextAutoSize
+                            .StepBased(
+                                minFontSize = nameTextSizeCollapsed,
+                                maxFontSize = nameTextSizeExpanded
+                            ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small))
+                    ) {
+                        if(!achievement.isAchieved)
+                            Icon(
+                                painter = painterResource(id = R.drawable.lock_icon),
+                                contentDescription = stringResource(R.string.locked_badge)
+                            )
+                        Text(
+                            text = if(achievement.isAchieved) achievement.description else stringResource(R.string.locked_badge)
+                        )
+                    }
+
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
+                ) {
+                    AchievementImage(
+                        achievement = achievement,
+                        modifier = modifier.sharedElement(
+                            rememberSharedContentState(key = "achievement_image"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                        onClick = { },
+                        size = BadgeSizeSmall
+                    )
+                    Text(
+                        modifier = Modifier.sharedElement(
+                            rememberSharedContentState(key = "achievement_name"),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                        text = achievement.name,
+                        autoSize = TextAutoSize
+                            .StepBased(
+                                minFontSize = nameTextSizeCollapsed,
+                                maxFontSize = nameTextSizeExpanded
+                            ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-            }
-        } else {
-            Row(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(
-                        horizontal = dimensionResource(R.dimen.padding_medium),
-                        vertical = dimensionResource(R.dimen.padding_small)
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
-            ) {
-                SubcomposeAsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(achievement.iconUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = achievement.description,
-                    modifier = Modifier
-                        .size(animatedImageSize)
-                        .sharedElement(
-                            rememberSharedContentState(key = iconSharedKey),
-                            animatedVisibilityScope = animatedVisibilityScope // CRUCIAL
-                        ),
-                    loading = {
-                        Box(
-                            modifier = Modifier
-                                .size(animatedImageSize)
-                                .shimmerLoadingAnimation()
-                        )
-                    },
-                    error = { ErrorIcon(size = animatedImageSize) }
-                )
-                Spacer(Modifier.width(dimensionResource(R.dimen.padding_small)))
-                Text(
-                    text = achievement.name,
-                    style = MaterialTheme.typography.displaySmall.copy(fontSize = animatedNameTextSize),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.sharedElement(
-                        rememberSharedContentState(key = nameSharedKey),
-                        animatedVisibilityScope = animatedVisibilityScope // CRUCIAL
-                    )
-                )
             }
         }
     }
@@ -321,45 +264,55 @@ fun Achievement(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        SubcomposeAsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(achievement.iconUrl)
-                .crossfade(true)
-                .build(),
-            contentDescription = achievement.description,
-            modifier = modifier
-                .padding(dimensionResource(R.dimen.padding_small))
-                .size(size)
-                .clickable(onClick = onClick),
-            loading = {
-                Box(
-                    modifier = Modifier
-                        .size(size)
-                        .shimmerLoadingAnimation()
-                )
-            },
-            error = {
-                Box(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.surfaceVariant), // Simple background for error
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Clear,
-                        contentDescription = "Image loading failed",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .size(size)
-                    )
-                }
-            }
+        AchievementImage(
+            achievement = achievement,
+            modifier = modifier,
+            onClick = onClick,
+            size = size
         )
 
         Text(
             text = achievement.name,
-            style = MaterialTheme.typography.titleSmall
+            style = MaterialTheme.typography.titleSmall,
         )
     }
+}
+
+@Composable
+fun AchievementImage(achievement: Achievement, modifier: Modifier = Modifier, onClick: () -> Unit, size: Dp = dimensionResource(R.dimen.badge_size_large)) {
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(achievement.iconUrl)
+            .crossfade(true)
+            .build(),
+        contentDescription = achievement.description,
+        modifier = modifier
+            .padding(dimensionResource(R.dimen.padding_small))
+            .size(size)
+            .clickable(onClick = onClick),
+        loading = {
+            Box(
+                modifier = Modifier
+                    .size(size)
+                    .shimmerLoadingAnimation()
+            )
+        },
+        error = {
+            Box(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.surfaceVariant), // Simple background for error
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Clear,
+                    contentDescription = "Image loading failed",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .size(size)
+                )
+            }
+        }
+    )
 }
 
 
