@@ -44,72 +44,57 @@ val AppTypography = Typography(
 val AppTypography = Typography(
     // Display styles (very large, prominent text)
     displayLarge = baseline.displayLarge.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Bold // Very bold for maximum impact
+        fontFamily = OnePlusSans
     ),
     displayMedium = baseline.displayMedium.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.SemiBold // Slightly less bold than displayLarge
+        fontFamily = OnePlusSans
     ),
     displaySmall = baseline.displaySmall.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.SemiBold
+        fontFamily = OnePlusSans
     ),
 
     // Headline styles (large headings)
     headlineLarge = baseline.headlineLarge.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Bold
+        fontFamily = OnePlusSans
     ),
     headlineMedium = baseline.headlineMedium.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.SemiBold
+        fontFamily = OnePlusSans
     ),
     headlineSmall = baseline.headlineSmall.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Medium
+        fontFamily = OnePlusSans
     ),
 
     // Title styles (subheadings, toolbar titles)
     titleLarge = baseline.titleLarge.copy(
         fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Medium
     ),
     titleMedium = baseline.titleMedium.copy(
         fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Medium
     ),
     titleSmall = baseline.titleSmall.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Medium
+        fontFamily = OnePlusSans
     ),
 
     // Body styles (main content text)
     bodyLarge = baseline.bodyLarge.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Normal // Standard for readability
+        fontFamily = OnePlusSans
     ),
     bodyMedium = baseline.bodyMedium.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Normal
+        fontFamily = OnePlusSans
     ),
     bodySmall = baseline.bodySmall.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Normal
+        fontFamily = OnePlusSans
     ),
 
     // Label styles (small, functional text like buttons, captions)
     labelLarge = baseline.labelLarge.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Medium // Often slightly bolder for buttons
+        fontFamily = OnePlusSans
     ),
     labelMedium = baseline.labelMedium.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Normal
+        fontFamily = OnePlusSans
     ),
     labelSmall = baseline.labelSmall.copy(
-        fontFamily = OnePlusSans,
-        fontWeight = FontWeight.Light // Can be lighter for subtle captions
+        fontFamily = OnePlusSans
     )
 )
 

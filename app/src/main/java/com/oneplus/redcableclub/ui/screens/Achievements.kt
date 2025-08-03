@@ -1,16 +1,9 @@
 package com.oneplus.redcableclub.ui.screens
 
 import android.content.res.Configuration
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,19 +11,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -165,6 +152,7 @@ fun AchievementDetail(
                             animatedVisibilityScope = animatedVisibilityScope
                         ),
                         onClick = { },
+                        onClickEnabled = false,
                         size = currentBadgeSize
                     )
 
@@ -212,6 +200,7 @@ fun AchievementDetail(
                             animatedVisibilityScope = animatedVisibilityScope
                         ),
                         onClick = { },
+                        onClickEnabled = false,
                         size = BadgeSizeSmall
                     )
                     Text(
@@ -252,7 +241,7 @@ private fun ErrorIcon(size: Dp) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 @Composable
 fun Achievement(
     achievement: Achievement,
@@ -279,7 +268,12 @@ fun Achievement(
 }
 
 @Composable
-fun AchievementImage(achievement: Achievement, modifier: Modifier = Modifier, onClick: () -> Unit, size: Dp = dimensionResource(R.dimen.badge_size_large)) {
+fun AchievementImage(
+    achievement: Achievement,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onClickEnabled: Boolean = true,
+    size: Dp = dimensionResource(R.dimen.badge_size_large)) {
     SubcomposeAsyncImage(
         model = ImageRequest.Builder(LocalContext.current)
             .data(achievement.iconUrl)
@@ -289,7 +283,7 @@ fun AchievementImage(achievement: Achievement, modifier: Modifier = Modifier, on
         modifier = modifier
             .padding(dimensionResource(R.dimen.padding_small))
             .size(size)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick, enabled = onClickEnabled),
         loading = {
             Box(
                 modifier = Modifier

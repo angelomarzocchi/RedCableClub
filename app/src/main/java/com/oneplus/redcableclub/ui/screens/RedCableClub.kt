@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -204,6 +203,7 @@ fun ProfileCardError(modifier: Modifier = Modifier) {
     }
 }
 
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
@@ -364,12 +364,25 @@ fun ProfileCard(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SkeletonCarousel(
     modifier: Modifier = Modifier,
     itemSpacing: Dp = dimensionResource(R.dimen.padding_small),
     bottomPadding: Dp = 0.dp,
 ) {
+    val state = rememberCarouselState(initialItem = 0, itemCount = { 3 })
+    Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        HorizontalCenteredHeroCarousel(
+            state = state,
+            content = { CarouselItemSkeleton() },
+            modifier = modifier.clip(RoundedCornerShape(dimensionResource(R.dimen.padding_small))),
+            itemSpacing = itemSpacing
+        )
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
+        DynamicCarouselIndicator(3 , 0)
+    }
+    /*
     Carousel(
         items = listOf<Any>(""),
         itemContent = { CarouselItemSkeleton() },
@@ -377,6 +390,8 @@ fun SkeletonCarousel(
         bottomPadding = bottomPadding,
         modifier = modifier
     )
+
+     */
 }
 
 
@@ -710,6 +725,8 @@ fun DiscoverCard(post: Ad, modifier: Modifier = Modifier) {
 }
 
 
+
+
 @Composable
 fun CarouselItemSkeleton(
     modifier: Modifier = Modifier,
@@ -719,7 +736,7 @@ fun CarouselItemSkeleton(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .carouselElementModifier()
                 .background(
                     color = MaterialTheme.colorScheme.surfaceContainerLow,
                     shape = RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small)))
@@ -804,9 +821,7 @@ fun HeroAd(ad: Ad, modifier: Modifier = Modifier) {
             contentDescription = ad.description,
             contentScale = ContentScale.Crop,
             modifier = modifier
-                .clip(RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small))))
-                .fillMaxWidth()
-                .aspectRatio(1.45f),
+                .carouselElementModifier(),
             loading = {
                 Box(
                     modifier = modifier
@@ -867,7 +882,7 @@ fun CouponHorizontalListSkeleton(modifier: Modifier = Modifier) {
             .fillMaxWidth() // Ensure Row takes full width for arrangement
     ) {
         for (i in 1..3) {
-            CouponElementSkeleton()
+            CouponElementSkeleton( modifier = Modifier.weight(1f))
         }
         val iconSize = (dimensionResource(R.dimen.coupon_size).value * 1.4).dp
         Column(
@@ -1096,12 +1111,11 @@ fun MembershipTierProgress(
 fun BadgesRowSkeleton(
     modifier: Modifier = Modifier,
     size: Dp = dimensionResource(R.dimen.badge_size),
-    spacing: Dp = dimensionResource(R.dimen.padding_small),
     ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(
-        space = spacing,
-        alignment = Alignment.CenterHorizontally
-    ), verticalAlignment = Alignment.CenterVertically, modifier = modifier)  {
+    Row(horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+    ) {
         repeat(3) {
             Box(
                 modifier =
@@ -1180,6 +1194,14 @@ fun Modifier.profileImageModifier(
         .size(size)
         .clip(CircleShape)
         .border(borderWidth, borderColor, CircleShape)
+}
+
+@Composable
+fun Modifier.carouselElementModifier(): Modifier {
+    return this
+        .clip(RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small))))
+        .fillMaxWidth()
+        .aspectRatio(1.45f)
 }
 
 @Composable

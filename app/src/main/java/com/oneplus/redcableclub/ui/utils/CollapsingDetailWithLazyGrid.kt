@@ -212,13 +212,12 @@ fun <T> CollapsingDetailWithLazyGrid(
             DetailWithLazyGridLayoutMode.SIDE_BY_SIDE_HORIZONTAL -> {
                 val gridState = rememberLazyGridState()
 
-                Scaffold(
+                Surface(
                     modifier = scaffoldModifier.fillMaxSize()
-                ) { scaffoldPaddingValues ->
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(scaffoldPaddingValues)
                     ) {
                         Box(
                             modifier = Modifier
