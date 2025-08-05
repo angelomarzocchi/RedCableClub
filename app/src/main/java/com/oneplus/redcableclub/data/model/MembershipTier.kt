@@ -27,5 +27,13 @@ enum class MembershipTier(val label: String,val minPoints: Int, val maxPoints: I
             val progress = 1 - (pointsToNextTier.toFloat() / (nextTier.minPoints - currentTier.minPoints))
             return progress.coerceIn(0.0f, 1.0f)
         }
+
+
     }
+}
+
+enum class MembershipStatus(val label: String) {
+    ACHIEVED("Level Achieved"),
+    CURRENT_TIER("Current Level"),
+    TO_ACHIEVE("Get more points to level up")
 }

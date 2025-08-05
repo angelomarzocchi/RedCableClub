@@ -29,4 +29,13 @@ data class UserProfile(
         return MembershipTier.getTierForPoints(redExpPoints)
     }
 
+    fun getMembershipTierStatus(membershipTier: MembershipTier): MembershipStatus {
+        val currentTier = MembershipTier.getTierForPoints(redExpPoints)
+        return if(currentTier.ordinal < membershipTier.ordinal) {
+            MembershipStatus.TO_ACHIEVE
+        } else if(currentTier.ordinal == membershipTier.ordinal) {
+            MembershipStatus.CURRENT_TIER
+        } else MembershipStatus.ACHIEVED
+    }
+
 }
