@@ -4,6 +4,7 @@ package com.oneplus.redcableclub.navigation
 
 
 import android.util.Log
+import androidx.activity.result.launch
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -34,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -51,9 +53,12 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
 import com.oneplus.redcableclub.R
 import com.oneplus.redcableclub.data.model.Achievement
+import com.oneplus.redcableclub.data.model.MembershipStatus
+import com.oneplus.redcableclub.data.model.MembershipTier
 import com.oneplus.redcableclub.ui.screens.Achievements
 import com.oneplus.redcableclub.ui.screens.AchievementsUiState
 import com.oneplus.redcableclub.ui.screens.AchievementsViewModel
+import com.oneplus.redcableclub.ui.screens.MembershipTierCard
 import com.oneplus.redcableclub.ui.screens.RedCableClub
 import com.oneplus.redcableclub.ui.screens.RedCableClubUiState
 import com.oneplus.redcableclub.ui.screens.RedCableClubViewModel
@@ -63,6 +68,8 @@ import com.oneplus.redcableclub.ui.utils.RedCableClubPermanentNavigationDrawer
 import com.oneplus.redcableclub.ui.utils.RedCableClubTopBar
 import com.oneplus.redcableclub.ui.utils.ResourceState
 import com.oneplus.redcableclub.ui.utils.TopBarState
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -70,6 +77,9 @@ data object RedCableClubScreen: NavKey
 
 @Serializable
 data object AchievementScreen: NavKey
+
+@Serializable
+data object CouponsScreen: NavKey
 
 @Serializable
 data object RedCoinsShopScreen: NavKey
@@ -233,6 +243,7 @@ fun RedCableClubNavDisplay(
     insets: WindowInsets,
     mainContentWidthInPx: Int,
 ) {
+    val coroutineScope = rememberCoroutineScope()
     NavDisplay(
         modifier = modifier,
         backStack = backStack,
@@ -251,6 +262,21 @@ fun RedCableClubNavDisplay(
                             uiState = redCableClubUiState,
                             onAchievementDetailClick = {
                                 backStack.addLast(AchievementScreen)
+                            },
+                            onShowAllCouponsClick = {
+                                coroutineScope.launch {
+                                    // Start your animation here (if it's a manual animation trigger)
+                                    // For example, if you have a state that controls an animation:
+                                    // isAnimatingCouponsTransition = true // Assuming this state triggers an animation
+
+                                    delay(300L) // Wait for 300 milliseconds (adjust as needed for your animation)
+
+                                    // After the delay, perform the navigation
+                                    backStack.addLast(CouponsScreen)
+
+                                    // Optionally, reset animation state if needed
+                                    // isAnimatingCouponsTransition = false
+                                }
                             },
                             paddingValues = insets.asPaddingValues(),
 
@@ -281,6 +307,27 @@ fun RedCableClubNavDisplay(
 
                     }
                 }
+                is CouponsScreen -> {
+                    NavEntry(key = route) {
+                        Log.d("NavigationRoot", "CouponsScreen")
+                        onTopBarStateChange(TopBarState(
+                            R.string.coupons,
+                            showNavigateBack = true,
+                            navigateBack = {
+                                backStack.remove(CouponsScreen)
+                            },
+                            isNavigatingBack = true
+                        ))
+
+                        MembershipTierCard(
+                            membershipTier = MembershipTier.ELITE,
+                            membershipStatus = MembershipStatus.TO_ACHIEVE,
+                            points = 3000,
+                            modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))
+                        )
+                    }
+                }
+
                 else -> {
                     NavEntry(key = RedCableClubScreen) {}
                 }

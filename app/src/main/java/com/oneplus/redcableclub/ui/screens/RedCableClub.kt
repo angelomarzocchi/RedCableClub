@@ -102,6 +102,7 @@ import kotlin.math.min
 fun RedCableClub(
     uiState: RedCableClubUiState,
     onAchievementDetailClick: () -> Unit,
+    onShowAllCouponsClick: () -> Unit,
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues = PaddingValues(0.dp),
     ) {
@@ -129,6 +130,7 @@ fun RedCableClub(
                     ProfileCard(
                         profile = state.data,
                         onAchievementDetailClick = onAchievementDetailClick,
+                        onShowAllCouponsClick = onShowAllCouponsClick,
                         modifier = Modifier
                             .padding(
                                 top = dimensionResource(R.dimen.padding_medium),
@@ -290,6 +292,7 @@ fun ProfileCardSkeleton(modifier: Modifier = Modifier) {
 fun ProfileCard(
     profile: UserProfile,
     onAchievementDetailClick: () -> Unit,
+    onShowAllCouponsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -355,7 +358,8 @@ fun ProfileCard(
             MembershipTierProgress(points = profile.redExpPoints)
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
             CouponHorizontalList(
-                coupons = profile.wallet
+                coupons = profile.wallet,
+                onShowAllCouponsClick = onShowAllCouponsClick
             )
 
 
@@ -923,7 +927,10 @@ fun CouponHorizontalListSkeleton(modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun CouponHorizontalList(coupons: List<Coupon>,modifier: Modifier = Modifier) {
+fun CouponHorizontalList(
+    coupons: List<Coupon>,
+    onShowAllCouponsClick: () -> Unit,
+    modifier: Modifier = Modifier) {
     val smallPadding = dimensionResource(R.dimen.padding_small)
 
     Row(
@@ -951,7 +958,7 @@ fun CouponHorizontalList(coupons: List<Coupon>,modifier: Modifier = Modifier) {
                     .widthIn(max = iconSize * 1.5f) // Constrain width
             ) {
                RotatingBackgroundButton(
-                   onClick = {},
+                   onClick = { onShowAllCouponsClick() },
                    modifier = Modifier.size(iconSize),
                    icon = {
                        Icon(
@@ -1361,6 +1368,7 @@ fun RedCableClubPreview() {
         Surface {
             RedCableClub(
                 onAchievementDetailClick = {},
+                onShowAllCouponsClick = {},
                 uiState = RedCableClubUiState(
                     adsState = ResourceState.Success(RedCableClubApiServiceMock.ads),
                     discoveryState = ResourceState.Success(RedCableClubApiServiceMock.discoverPosts),
@@ -1377,7 +1385,8 @@ fun ProfileCardPreview() {
     RedCableClubTheme(dynamicColor = false, darkTheme = true) {
         ProfileCard(
             profile = RedCableClubApiServiceMock.userMock,
-            onAchievementDetailClick = {}
+            onAchievementDetailClick = {},
+            onShowAllCouponsClick = {}
         )
     }
 }
@@ -1388,7 +1397,8 @@ fun ProfileCardPreviewLight() {
     RedCableClubTheme(dynamicColor = false) {
         ProfileCard(
             profile = RedCableClubApiServiceMock.userMock,
-            onAchievementDetailClick = {}
+            onAchievementDetailClick = {},
+            onShowAllCouponsClick = {}
         )
     }
 }

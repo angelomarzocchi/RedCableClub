@@ -44,6 +44,8 @@ val eliteSupremeBackgroundColor = Color(0xFF1C1C1C)
 
 private const val CARD_ASPECT_RATIO = 1.66f
 private val DOT_RADIUS_DP = 1.5.dp
+private val PLUS_SYMBOL_SIZE_DP = 1.5.dp
+private val PLUS_STROKE_WIDTH_DP = 1.dp
 private val IDEAL_DOT_SPACING_DP = 10.dp
 private const val INITIAL_STEP_VALUE = 5
 private const val MIN_STEP_VALUE = 1
@@ -148,6 +150,9 @@ fun MembershipTierCard(
                     .drawWithCache {
                         val dotRadiusPx = DOT_RADIUS_DP.toPx()
                         val idealDotSpacingPx = IDEAL_DOT_SPACING_DP.toPx()
+                        val strokeWidthPx = PLUS_STROKE_WIDTH_DP.toPx()
+                        val plusSymbolArmLengthPx = PLUS_SYMBOL_SIZE_DP.toPx() // Length of one arm of the "+" from the center
+
 
                         val canvasWidth = size.width
                         val canvasHeight = size.height
@@ -170,10 +175,25 @@ fun MembershipTierCard(
                                     for (j in 0..numRowsEstimate step currentDotPatternStep) {
                                         val xPos = i * adjustedHorizontalDotSpacing
                                         val yPos = j * adjustedVerticalDotSpacing + dotRadiusPx
-                                        drawCircle(
-                                            color = dotColor.copy(alpha = (i.toFloat() / DOT_ALPHA_DIVISOR).coerceIn(0f, 1f)),
-                                            radius = dotRadiusPx,
-                                            center = Offset(xPos, yPos)
+
+
+
+                                        val symbolColorWithAlpha = dotColor.copy(alpha = (i.toFloat() / DOT_ALPHA_DIVISOR).coerceIn(0f, 1f))
+
+
+                                        drawLine(
+                                            color = symbolColorWithAlpha,
+                                            start = Offset(xPos - plusSymbolArmLengthPx, yPos),
+                                            end = Offset(xPos + plusSymbolArmLengthPx, yPos),
+                                            strokeWidth = strokeWidthPx
+                                        )
+
+                                        // Draw vertical line of the "+"
+                                        drawLine(
+                                            color = symbolColorWithAlpha,
+                                            start = Offset(xPos, yPos - plusSymbolArmLengthPx),
+                                            end = Offset(xPos, yPos + plusSymbolArmLengthPx),
+                                            strokeWidth = strokeWidthPx
                                         )
                                     }
                                 }

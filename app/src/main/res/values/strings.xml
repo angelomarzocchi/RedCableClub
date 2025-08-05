@@ -12,4 +12,5 @@
     <string name="locked_badge">Link device to claim the badge</string>
     <string name="no_achievement">Achievement could not be loaded</string>
     <string name="red_exp_points">Red Exp Points</string>
+    <string name="coupons">Coupons</string>
 </resources>
