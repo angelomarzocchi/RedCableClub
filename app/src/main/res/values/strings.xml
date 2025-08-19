@@ -13,4 +13,10 @@
     <string name="no_achievement">Achievement could not be loaded</string>
     <string name="red_exp_points">Red Exp Points</string>
     <string name="coupons">Coupons</string>
+    <string name="redeem_coupon">Redeem Coupon</string>
+    <string name="show_less">Show less</string>
+    <string name="show_more">Show more</string>
+    <string name="copy_code">Copy Coupon code</string>
+    <string name="coupon_code_label">Red Cable Club Coupon Code</string>
+    <string name="coupon_code">Code: %1$s</string>
 </resources>

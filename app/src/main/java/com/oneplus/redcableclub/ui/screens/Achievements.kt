@@ -65,6 +65,9 @@ fun Achievements(
     paddingValues: PaddingValues = PaddingValues(0.dp)
 ) {
 
+    val lastRowFirstIndex = if(achievements.size % 3 == 0)
+        achievements.size - 3 else achievements.size - (achievements.size % 3) + 1
+
     val configuration = LocalConfiguration.current
     val currentLayoutMode = if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
         DetailWithLazyGridLayoutMode.SIDE_BY_SIDE_HORIZONTAL
@@ -87,10 +90,10 @@ fun Achievements(
                 sharedTransitionScope = this
             )
         },
-        gridItemContent = { item, onClick ->
+        gridItemContent = { item,index, onClick ->
             Achievement(
                 achievement = item,
-                onClick = onClick
+                onClick = onClick,
             )
         },
         modifier = modifier,

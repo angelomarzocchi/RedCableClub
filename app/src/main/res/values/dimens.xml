@@ -6,8 +6,10 @@
 
     <dimen name="height_small">8dp</dimen>
     <dimen name="padding_medium">16dp</dimen>
+    <dimen name="padding_profile_card">24dp</dimen>
     <dimen name="padding_large">32dp</dimen>
     <dimen name="carousel_base_padding">36dp</dimen>
+    <dimen name="never_settle_logo_size">72dp</dimen>
     <dimen name="top_bar_height">96dp</dimen>
     <dimen name="height_medium">16dp</dimen>
     <dimen name="profile_image_size">100dp</dimen>

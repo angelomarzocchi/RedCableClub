@@ -87,6 +87,7 @@ fun <T> CollapsingDetailWithLazyGrid(
     ) -> Unit,
     gridItemContent: @Composable SharedTransitionScope.(
             item: T,
+            position: Int,
             onClick: () -> Unit
             ) -> Unit
     ) {
@@ -200,6 +201,7 @@ fun <T> CollapsingDetailWithLazyGrid(
                                 val item = items[index]
                                 this@SharedTransitionLayout.gridItemContent(
                                     item,
+                                    index,
                                     { onItemSelected(item) }
                                 )
 
@@ -260,6 +262,7 @@ fun <T> CollapsingDetailWithLazyGrid(
                                 val item = items[index]
                                 this@SharedTransitionLayout.gridItemContent(
                                     item,
+                                    index,
                                     { onItemSelected(item)
                                     }
                                 )
@@ -294,7 +297,7 @@ fun CollapsingToolbarWithLazyGridPreview() {
                 }
             }
         },
-        gridItemContent = { item, onClick ->
+        gridItemContent = { item, index, onClick ->
             Card(
                 onClick = onClick,
                 modifier = Modifier
@@ -330,7 +333,7 @@ private fun CollapsingToolbarWithLazyGridPreviewHorizontal() {
                 }
             }
         },
-        gridItemContent = { item, onClick ->
+        gridItemContent = { item,index, onClick ->
             Card(
                 onClick = onClick,
                 modifier = Modifier

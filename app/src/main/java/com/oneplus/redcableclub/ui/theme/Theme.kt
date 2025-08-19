@@ -15,8 +15,11 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
-
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
+import com.oneplus.redcableclub.R
 
 
 private val lightScheme = lightColorScheme(
@@ -286,4 +289,12 @@ fun RedCableClubTheme(
 
 val ColorScheme.gold: Color @Composable
 get() = if (isSystemInDarkTheme()) goldColorDark else goldColorLight
+
+val ColorScheme.neverSettleLogoResource: Painter
+@Composable
+get() = if(isSystemInDarkTheme()) {
+    painterResource(id = R.drawable.op_ns_reg_1l_rgb_wht)
+} else {
+    painterResource(id = R.drawable.op_ns_reg_1l_rgb_blk)
+}
 

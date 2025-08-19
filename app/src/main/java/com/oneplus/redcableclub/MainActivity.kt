@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
 import com.oneplus.redcableclub.navigation.NavigationRoot
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
 

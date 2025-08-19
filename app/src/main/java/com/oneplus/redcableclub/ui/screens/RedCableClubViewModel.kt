@@ -9,6 +9,9 @@ import com.oneplus.redcableclub.RedCableClubApplication
 import com.oneplus.redcableclub.data.AdRepository
 import com.oneplus.redcableclub.data.UserProfileRepository
 import com.oneplus.redcableclub.data.model.Ad
+import com.oneplus.redcableclub.data.model.AmountCoupon
+import com.oneplus.redcableclub.data.model.Coupon
+import com.oneplus.redcableclub.data.model.CouponFactory
 import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.ui.utils.ResourceState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,9 +84,15 @@ class RedCableClubViewModel(
         }
     }
 
-
-
-
+    fun onCouponRedeemed(coupon: Coupon) {
+        /*
+        in real life scenario we would be calling some API to redeem the coupon
+         */
+        viewModelScope.launch {
+            val wallet = (_uiState.value.userProfileState as ResourceState.Success).data.wallet
+             wallet.find { it.code == coupon.code }?.isRedeemed = true
+        }
+    }
 
         companion object {
             val Factory: ViewModelProvider.Factory = viewModelFactory {

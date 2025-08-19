@@ -2,13 +2,9 @@ package com.oneplus.redcableclub.ui.screens
 
 import android.util.Log
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -25,9 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
@@ -63,12 +56,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.FixedScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -89,13 +80,12 @@ import com.oneplus.redcableclub.data.model.MembershipTier
 import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
+import com.oneplus.redcableclub.ui.theme.neverSettleLogoResource
+import com.oneplus.redcableclub.ui.utils.DynamicCarouselIndicator
 import com.oneplus.redcableclub.ui.utils.FrostedGlassBox
 import com.oneplus.redcableclub.ui.utils.ResourceState
 import com.oneplus.redcableclub.ui.utils.RotatingBackgroundButton
 import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
-import kotlin.math.absoluteValue
-import kotlin.math.max
-import kotlin.math.min
 
 
 @Composable
@@ -189,12 +179,17 @@ fun RedCableClub(
                 is ResourceState.Success<List<Ad>> -> DiscoverMaterial3Carousel(
                     posts = state.data,
                     modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_medium), end = dimensionResource(R.dimen.padding_medium)),
-                    bottomPadding = paddingValues.calculateBottomPadding()
                 )
             }
         }
-
-
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
+        Text(
+            text = "Never Settle",
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleMedium
+        )
+        Spacer(modifier = Modifier.height( dimensionResource(R.dimen.height_small) + paddingValues.calculateBottomPadding()))
     }
 }
 
@@ -299,9 +294,9 @@ fun ProfileCard(
         modifier = modifier
     ) {
 
-        Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))) {
+        Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_profile_card))) {
             Row(
-                horizontalArrangement = Arrangement.Start,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ProfileImage(
@@ -309,9 +304,9 @@ fun ProfileCard(
                     modifier = Modifier.size(dimensionResource(R.dimen.profile_image_size))
                 )
                 Column(
-                    verticalArrangement = Arrangement.SpaceAround,
+                    verticalArrangement = Arrangement.SpaceBetween,
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(3f)
+                    modifier = Modifier.padding(start = dimensionResource(R.dimen.padding_small))
                 ) {
                     Text(
                         text =  profile.username ,
@@ -321,6 +316,7 @@ fun ProfileCard(
                     BadgesRow(
                         achievements = profile.achievements,
                         onAchievementDetailClick = onAchievementDetailClick,
+                        modifier = Modifier.fillMaxWidth()
                     )
 
 
@@ -359,7 +355,8 @@ fun ProfileCard(
             Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
             CouponHorizontalList(
                 coupons = profile.wallet,
-                onShowAllCouponsClick = onShowAllCouponsClick
+                onShowAllCouponsClick = onShowAllCouponsClick,
+                modifier = Modifier.fillMaxWidth()
             )
 
 
@@ -386,33 +383,9 @@ fun SkeletonCarousel(
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
         DynamicCarouselIndicator(3 , 0)
     }
-    /*
-    Carousel(
-        items = listOf<Any>(""),
-        itemContent = { CarouselItemSkeleton() },
-        itemSpacing = itemSpacing,
-        bottomPadding = bottomPadding,
-        modifier = modifier
-    )
-
-     */
 }
 
 
-
-@Composable
-fun AdCarousel(
-    ads: List<Ad>,
-    modifier: Modifier = Modifier,
-    itemSpacing: Dp = 0.dp
-) {
-    Carousel(
-        items = ads,
-        itemContent = { AdCard(ad = it) },
-        itemSpacing = itemSpacing,
-        modifier = modifier
-    )
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -436,20 +409,6 @@ fun AdMaterial3Carousel(
 }
 
 
-@Composable
-fun DiscoverPostCarousel(
-    posts: List<Ad>,
-    modifier: Modifier = Modifier,
-    bottomPadding: Dp = 0.dp,
-    ) {
-    Carousel(
-        items = posts,
-        itemContent = { DiscoverCard(post = it) },
-        itemSpacing = 0.dp,
-        bottomPadding = bottomPadding,
-        modifier = modifier
-    )
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -475,192 +434,14 @@ fun DiscoverMaterial3Carousel(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun <T> Carousel(
-    items: List<T>,
-    itemContent: @Composable (item: T) -> Unit,
-    modifier: Modifier = Modifier,
-    itemSpacing: Dp = dimensionResource(R.dimen.padding_small),
-    bottomPadding:Dp = 0.dp,
-) {
-
-    val hapticFeedback = LocalHapticFeedback.current
-
-    val itemsSize = items.size.coerceAtLeast(1)
-    // 1. Use a very large number for the virtual page count
-    val virtualCount = Int.MAX_VALUE
-
-    // 2. Calculate a starting page in the middle of the virtual range
-    //    that maps correctly to the first actual item (index 0).
-    val startPage = (virtualCount / 2) - ((virtualCount / 2).mod(itemsSize))
-
-    // 3. Remember PagerState with the virtual count and calculated start page
-    val pagerState = rememberPagerState(
-        initialPage = startPage,
-        pageCount = { virtualCount }
-    )
-
-
-    LaunchedEffect(pagerState.settledPage) {
-        if (pagerState.currentPage == pagerState.settledPage) {
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-
-        }
-    }
-
-
-    Column {
-        HorizontalPager(
-            state = pagerState,
-            modifier = modifier
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = dimensionResource(R.dimen.carousel_base_padding) + itemSpacing / 2),
-
-            pageSpacing = itemSpacing
-        ) { virtualPageIndex ->
-
-            val actualIndex = virtualPageIndex.mod(itemsSize)
-            val pageOffset =
-                (pagerState.currentPage - virtualPageIndex) + pagerState.currentPageOffsetFraction
-            val scale by animateFloatAsState(
-                targetValue = lerp(1f, 0.85f, pageOffset.absoluteValue.coerceAtMost(1f)),
-                label = "scaleAnimation",
-
-                 animationSpec = spring(
-                     dampingRatio = Spring.DampingRatioMediumBouncy,
-                     stiffness = Spring.StiffnessLow
-                 )
-            )
-            val alpha by animateFloatAsState(
-                targetValue = lerp(1f, 0.7f, pageOffset.absoluteValue.coerceAtMost(1f)),
-                label = "alphaAnimation"
-            )
-
-
-            Box(
-                modifier = Modifier
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        this.alpha = alpha
-                    }
-            ) {
-                itemContent(items[actualIndex])
-            }
-        }
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.height_small)))
-
-        DynamicCarouselIndicator(
-            size = itemsSize,
-            currentPage = pagerState.currentPage.mod(itemsSize),
-            modifier = Modifier.padding(
-                bottom = bottomPadding
-            )
-        )
-    }
-}
 
 
 
 
-@Composable
-fun DynamicCarouselIndicator(
-    size: Int,
-    currentPage: Int,
-    modifier: Modifier = Modifier,
-    maxVisibleIndicators: Int = 7,
-    activeColor: Color = MaterialTheme.colorScheme.primary,
-    inactiveColor: Color = Color.LightGray,
-    indicatorSize: Dp = 8.dp,
-    indicatorPadding: Dp = 4.dp,
-) {
-
-    val hapticFeedback = LocalHapticFeedback.current
-    LaunchedEffect(currentPage) {
-        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-    }
-
-    Row(
-        modifier = modifier
-            .wrapContentHeight()
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically // Align text vertically
-    ) {
-        // Calculate the range of indicators to display
-        val startIndex = max(0, currentPage - maxVisibleIndicators / 2)
-        val endIndex = min(size - 1, startIndex + maxVisibleIndicators - 1)
-        if (startIndex > 0) {
-            for(i in min(3,startIndex) downTo 1) {
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = indicatorPadding)
-                        .clip(CircleShape)
-                        .background(inactiveColor)
-                        .size(indicatorSize / (i + 1))
-                )
-            }
-        }
 
 
-        for (i in startIndex..endIndex) {
-            val isCurrentPage = currentPage == i
-
-            val indicatorColor by animateColorAsState(
-                targetValue = if (isCurrentPage) activeColor else inactiveColor,
-                label = "indicatorColorAnimation"
-                // You can customize animation spec here, e.g., tween(durationMillis = 300)
-            )
-
-            val indicatorWidth by animateDpAsState(
-                targetValue = if (isCurrentPage) indicatorSize * 2 else indicatorSize,
-                label = "indicatorWidthAnimation",
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-                // You can customize animation spec here
-            )
-            val cornerSize by animateDpAsState(
-                targetValue = if (isCurrentPage) indicatorSize else indicatorSize / 2, // Half of size for circular appearance
-                label = "indicatorCornerSizeAnimation",
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            )
-
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = indicatorPadding)
-                    .clip(RoundedCornerShape(cornerSize))
-                    .background(indicatorColor)
-                    .size(
-                        height = indicatorSize,
-                        width = indicatorWidth
-                    )
-            )
-        }
 
 
-        if (endIndex < size - 1) {
-            for(i in 1..min(3,size - 1 - endIndex)) {
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = indicatorPadding)
-                        .clip(CircleShape)
-                        .background(inactiveColor)
-                        .size(indicatorSize / (i + 1))
-                )
-            }
-        }
-    }
-    }
-
-fun lerp(start: Float, stop: Float, fraction: Float): Float {
-    return start + fraction * (stop - start)
-}
 
 
 @Composable
@@ -934,9 +715,8 @@ fun CouponHorizontalList(
     val smallPadding = dimensionResource(R.dimen.padding_small)
 
     Row(
-        horizontalArrangement = Arrangement.spacedBy(smallPadding),
+        horizontalArrangement = Arrangement.SpaceAround,
         modifier = modifier
-            .padding(dimensionResource(R.dimen.padding_small))
             .fillMaxWidth() // Ensure Row takes full width for arrangement
     ) {
         // Display up to 3 coupons
@@ -947,15 +727,13 @@ fun CouponHorizontalList(
             )
         }
 
-        // Show "Show All" icon if there are more coupons or if the list is empty and we want to show it anyway
-        if (coupons.size > 3 || coupons.isEmpty()) { // Adjusted condition
+
             val iconSize = (dimensionResource(R.dimen.coupon_size).value * 1.4).dp
             Column(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .weight(1f) // Distribute space equally
-                    .widthIn(max = iconSize * 1.5f) // Constrain width
             ) {
                RotatingBackgroundButton(
                    onClick = { onShowAllCouponsClick() },
@@ -981,7 +759,7 @@ fun CouponHorizontalList(
                     textAlign = TextAlign.Center // Center the text for better balance
                 )
             }
-        }
+
     }
 }
 
@@ -1028,44 +806,7 @@ fun CouponElementSkeleton(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun CouponElement(
-    coupon: Coupon,
-    modifier: Modifier = Modifier,
-    icon: ImageVector = Icons.Filled.LocalOffer,
-    iconSize: Dp = dimensionResource(R.dimen.coupon_size)
 
-) {
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.width(iconSize * 1.5f)) {
-
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(iconSize)
-                .clip(MaterialShapes.Cookie4Sided.toShape())
-                .background(MaterialTheme.colorScheme.secondary, CircleShape) // Add a subtle background
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = coupon.description,
-                tint = MaterialTheme.colorScheme.onSecondary
-            )
-        }
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_extra_small)))
-        Text(
-            text = coupon.description,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.widthIn(max = iconSize * 1.5f),
-            textAlign = TextAlign.Center // Center the text for better balance
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -1148,7 +889,7 @@ fun BadgesRow(
     modifier: Modifier = Modifier,
     size: Dp = dimensionResource(R.dimen.badge_size),
     ) {
-    Row(horizontalArrangement = Arrangement.SpaceAround,
+    Row(horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
 
 
@@ -1185,7 +926,7 @@ fun BadgesRow(
                 }
             )
         }
-        FilledIconButton(onClick = onAchievementDetailClick) {
+        FilledIconButton(onClick = onAchievementDetailClick, modifier = Modifier.size(size)) {
             Icon(imageVector =Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
         }
     }
@@ -1294,17 +1035,6 @@ fun SkeletonCarouselPreview() {
 }
 
 
-@Preview
-@Composable
-fun DiscoverCarouselPreview() {
-    RedCableClubTheme(dynamicColor = false) {
-        Surface {
-            DiscoverPostCarousel(
-            posts = RedCableClubApiServiceMock.discoverPosts
-            )
-        }
-    }
-}
 
 @Preview
 @Composable
@@ -1318,48 +1048,6 @@ fun AdMaterial3CarouselPreview() {
     }
 }
 
-
-
-/*
-@Preview
-@Composable
-fun DiscoverCardPreview() {
-    RedCableClubTheme(dynamicColor = false) {
-        Surface {
-            DiscoverCard(post = FakeAdRepository().discoverPosts[1])
-        }
-    }
-}
-
-@Preview
-@Composable
-fun AdCardPreview() {
-    RedCableClubTheme {
-        Surface {
-            AdCard(ad = FakeAdRepository().ads[0], modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)))
-        }
-    }
-}
-
-@Preview
-@Composable
-fun CouponPreview() {
-    RedCableClubTheme {
-        Surface {
-            CouponElement(coupon = FakeUserProfileRepository().fakeUserProfile.wallet[0])
-        }
-    }
-}
-
-@Preview
-@Composable
-fun ProfileImagePreview() {
-    RedCableClubTheme {
-        ProfileImage(imageResourceId = R.drawable.userprofile_image)
-    }
-}
-
- */
 
 @Preview
 @Composable
