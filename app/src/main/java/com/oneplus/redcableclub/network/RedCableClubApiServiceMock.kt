@@ -54,7 +54,9 @@ class RedCableClubApiServiceMock(): RedCableClubApiService {
                 )
             ),
             devices = listOf(
-                Device(name = "OnePlus 13", imei = "0100010001000")
+                Device(name = "OnePlus 13", imei = "0100010001000", imageUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.device_oneplus13)),
+                Device(name = "OnePlus Pad 3", imei = "0200020002000", imageUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.device_onepluspad3)),
+                Device(name = "OnePlus Watch 3 43mm", imei = "0300030003000", imageUrl = getDrawableUri(com.oneplus.redcableclub.R.drawable.device_onepluswatch3_43mm))
             ),
             achievements = listOf(
                 Achievement(

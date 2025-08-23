@@ -70,6 +70,7 @@ import com.oneplus.redcableclub.ui.screens.MembershipTierCardCarousel
 import com.oneplus.redcableclub.ui.screens.RedCableClub
 import com.oneplus.redcableclub.ui.screens.RedCableClubUiState
 import com.oneplus.redcableclub.ui.screens.RedCableClubViewModel
+import com.oneplus.redcableclub.ui.screens.Service
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationBar
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationRail
 import com.oneplus.redcableclub.ui.utils.RedCableClubPermanentNavigationDrawer
@@ -114,7 +115,7 @@ fun NavigationRoot(
 
     val backStack = rememberNavBackStack(RedCableClubScreen)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
-    val bottomScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior(rememberBottomAppBarState())
+    val bottomScrollBehavior = BottomAppBarDefaults.exitAlwaysScrollBehavior(rememberBottomAppBarState(),)
     val navigationType = computeNavigationType(windowSizeClass)
 
     var topBarState by remember { mutableStateOf(TopBarState(R.string.app_name, showNavigateBack = false, icon = R.drawable.red_cable_club_icon)) }
@@ -332,6 +333,31 @@ fun RedCableClubNavDisplay(
                             redExpPoints = userProfile.redExpPoints,
                             onCouponRedeemed = { onCouponRedeemed(it) },
                             paddingValues = insets.asPaddingValues()
+                        )
+                    }
+                }
+
+                is RedCoinsShopScreen -> {
+                    NavEntry(key = route) {
+                        Log.d("NavigationRoot", "RedCoinsShopScreen")
+                        onTopBarStateChange(TopBarState(
+                            R.string.red_coins_shop,
+                            showNavigateBack = false
+                        ))
+                    }
+                }
+
+                is ServiceDetailScreen -> {
+                    NavEntry(key = route) {
+                        Log.d("NavigationRoot", "ServiceScreen")
+                        onTopBarStateChange(TopBarState(
+                            R.string.service_detail,
+                            showNavigateBack = false,
+                            isNavigatingBack = false
+                        ))
+                        val userProfile = (redCableClubUiState.userProfileState as ResourceState.Success<UserProfile>).data
+                        Service(
+                            devices = userProfile.devices
                         )
                     }
                 }

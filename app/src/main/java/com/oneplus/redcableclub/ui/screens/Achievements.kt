@@ -65,9 +65,6 @@ fun Achievements(
     paddingValues: PaddingValues = PaddingValues(0.dp)
 ) {
 
-    val lastRowFirstIndex = if(achievements.size % 3 == 0)
-        achievements.size - 3 else achievements.size - (achievements.size % 3) + 1
-
     val configuration = LocalConfiguration.current
     val currentLayoutMode = if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
         DetailWithLazyGridLayoutMode.SIDE_BY_SIDE_HORIZONTAL
@@ -81,6 +78,7 @@ fun Achievements(
         layoutMode = currentLayoutMode,
         selectedItem = selectedAchievement,
         onItemSelected = { achievement -> onItemSelected(achievement)},
+        minHeaderHeight = 140.dp,
         detailContent = {item, collapseProgress, isExpanded, animatedVisibilityScope ->
             AchievementDetail(
                 achievement = item,
@@ -113,8 +111,6 @@ fun AchievementDetail(
     collapseProgress: Float,
     modifier: Modifier = Modifier,
     isExpanded: Boolean = false,
-    badgeSizeExtraLarge: Dp = BadgeSizeExtraLarge,
-    badeSizeSmall: Dp = BadgeSizeSmall,
     nameTextSizeExpanded: TextUnit = DefaultNameTextSizeExpanded,
     nameTextSizeCollapsed: TextUnit = DefaultNameTextSizeCollapsed,
 ) {
@@ -204,7 +200,7 @@ fun AchievementDetail(
                         ),
                         onClick = { },
                         onClickEnabled = false,
-                        size = BadgeSizeSmall
+                        size = currentBadgeSize
                     )
                     Text(
                         modifier = Modifier.sharedElement(
