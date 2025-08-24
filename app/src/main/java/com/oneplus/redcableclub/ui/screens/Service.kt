@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -67,13 +68,13 @@ fun Service(
             faqItems = listOf(
                 FaqItem(
                     1,
-                    "Why am I not able to link my device?",
-                    "Only OnePlus devices can be linked with your account. Other devices are not supported for linking.\n" +
-                            "If you see 'Link Failed: Your device has been linked by xxx, please contact customer service for help.' This means that your device has been activated with another account previously and some device benefits may have been claimed already. You can link another device that has not been activated with another account previously to claim benefits."
+                    stringResource(R.string.faq_service_q1),
+                    stringResource(R.string.faq_service_a1)
                 ),
-                FaqItem(2, "How can I claim my benefits?", "How can I claim my benefits?\n" +
-                        "Device benefits can only be claimed after your device is linked successfully.\n" +
-                        "The device benefits can only be claimed once by one account.")
+                FaqItem(
+                    2,
+                    stringResource(R.string.faq_service_q2),
+                    stringResource(R.string.faq_service_a2))
 
             )
         )

@@ -4,20 +4,14 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-08-17T08:27:42.882669800Z">
+        <DropdownSelection timestamp="2025-08-23T14:23:08.918636500Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=a992be9b" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\angel\.android\avd\OnePlus_13.avd" />
             </handle>
           </Target>
         </DropdownSelection>
         <DialogSelection />
-      </SelectionState>
-      <SelectionState runConfigName="RotatingBackgroundButtonPreview">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
-      <SelectionState runConfigName="CollapsingToolbarWithLazyGridPreview">
-        <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
       <SelectionState runConfigName="MembershipTierCardPreview">
         <option name="selectionMode" value="DROPDOWN" />
@@ -42,6 +36,12 @@
         <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="CouponCardPreview">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="RedCoinsCardPreview">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="FaqItemViewWithCustomExtensionPreview">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

@@ -15,14 +15,18 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.RemoveCircle
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +34,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.oneplus.redcableclub.R
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
 
@@ -38,6 +43,49 @@ data class FaqItem(
     val question: String,
     val answer: String
 )
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FaqItemViewWithCustomExtension(
+    faqItem: FaqItem,
+    expandedView: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var isExpanded by rememberSaveable { mutableStateOf(false) }
+    FaqItemQuestion(
+        faqItem.question,
+        onToggleExpand = {isExpanded = true},
+        isExpanded = isExpanded,
+        modifier = modifier
+    )
+
+    if(isExpanded) {
+        ModalBottomSheet(
+            onDismissRequest = { isExpanded = false }
+        ) {
+            expandedView()
+        }
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+fun FaqItemViewWithCustomExtensionPreview() {
+    val faqItem = FaqItem(id = 1, question = "Sample Question with custom extension", answer = "Sample Answer")
+    RedCableClubTheme {
+        Surface {
+        FaqItemViewWithCustomExtension(
+            faqItem = faqItem,
+            expandedView = { Text("Custom Expanded View Content") },
+            modifier = Modifier.padding(vertical = 32.dp)
+        )
+    }
+        }
+}
+
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -48,7 +96,7 @@ fun FaqItemView(
     modifier: Modifier = Modifier,
 ) {
 
-    val iconRotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "iconRotation")
+
 
 
     Column(
@@ -57,26 +105,10 @@ fun FaqItemView(
             .clickable{ onToggleExpand() }
 
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = faqItem.question,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = {
-                onToggleExpand()
-            }) {
-                Icon(
-                    imageVector = if (isExpanded) Icons.Filled.RemoveCircle else Icons.Filled.AddCircle,
-                    contentDescription = if (isExpanded) "Collapse" else "Expand",
-                    modifier = Modifier.rotate(iconRotation) // Simpler: just change icon
-                )
-            }
-        }
+        FaqItemQuestion(
+            question = faqItem.question,
+            onToggleExpand = onToggleExpand,
+            isExpanded = isExpanded)
 
         AnimatedVisibility(visible = isExpanded) {
             Text(
@@ -91,6 +123,38 @@ fun FaqItemView(
         }
     }
 
+}
+
+
+@Composable
+fun FaqItemQuestion(
+    question: String,
+    onToggleExpand: () -> Unit,
+    isExpanded: Boolean,
+    modifier : Modifier = Modifier
+) {
+
+    val iconRotation by animateFloatAsState(targetValue = if (isExpanded) 180f else 0f, label = "iconRotation")
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = question,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(onClick = {
+            onToggleExpand()
+        }) {
+            Icon(
+                imageVector = if (isExpanded) Icons.Filled.RemoveCircle else Icons.Filled.AddCircle,
+                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                modifier = Modifier.rotate(iconRotation)
+            )
+        }
+    }
 }
 
 @Composable
@@ -111,9 +175,9 @@ fun FaqList(
                 faqItem = faqItem,
                 isExpanded = faqItem.id == expandedItemId,
                 onToggleExpand = {
-                    if(faqItem.id == expandedItemId)
-                    expandedItemId = null
-                    else expandedItemId = faqItem.id
+                    expandedItemId = if(faqItem.id == expandedItemId)
+                        null
+                    else faqItem.id
                 }
             )
         }
