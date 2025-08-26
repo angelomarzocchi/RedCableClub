@@ -63,7 +63,7 @@ fun FaqItemViewWithCustomExtension(
         ModalBottomSheet(
             onDismissRequest = { isExpanded = false }
         ) {
-            expandedView()
+                expandedView()
         }
     }
 

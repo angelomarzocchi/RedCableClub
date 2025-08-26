@@ -1,12 +1,17 @@
 package com.oneplus.redcableclub.ui.screens
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -16,16 +21,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -45,6 +58,7 @@ import com.oneplus.redcableclub.ui.utils.FaqItem
 import com.oneplus.redcableclub.ui.utils.FaqItemQuestion
 import com.oneplus.redcableclub.ui.utils.FaqItemViewWithCustomExtension
 import java.math.BigDecimal
+import java.math.RoundingMode
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -52,19 +66,27 @@ fun RedCoinsCard(
     redCoins: Int,
     modifier: Modifier = Modifier,
 ) {
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = 1f,
+        label = "progressAnimation",
+        animationSpec = tween(durationMillis = 800)
+    )
+
     Card(modifier = modifier) {
         LinearWavyProgressIndicator(
-            progress = {1f},
+            progress = {animatedProgress},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = dimensionResource(R.dimen.padding_medium)),
             stroke = Stroke(width = 16.dp.value, cap = StrokeCap.Round),
-            waveSpeed = 5.dp
+            waveSpeed = 0.dp
         )
         Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     painter = painterResource(id = R.drawable.red_coins_icon),
+                    tint = MaterialTheme.colorScheme.primary,
                     contentDescription = null,
                     modifier = Modifier.size(MaterialTheme.typography.headlineMedium.fontSize.value.dp)
                 )
@@ -80,7 +102,7 @@ fun RedCoinsCard(
                     id = 1,
                     answer = ""
                 ),
-                expandedView = {EarnRedCoinsExplanations()}
+                expandedView = {ExplanationsTab()}
             )
 
 
@@ -89,6 +111,65 @@ fun RedCoinsCard(
         }
 
 
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExplanationsTab(
+    modifier: Modifier = Modifier
+) {
+    var selectedIndex by remember { mutableStateOf(0) }
+    val options = listOf(stringResource(R.string.earn_red_coins), stringResource(R.string.spend_red_coins))
+
+    LazyVerticalGrid(
+       /* modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
+
+        */
+        columns = GridCells.Fixed(1),
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium)),
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium)),
+        modifier = modifier.fillMaxSize()
+    ) {
+        item {
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.fillMaxWidth(fraction = 0.66f)
+                    .padding(dimensionResource(R.dimen.padding_medium))
+            ) {
+                options.forEachIndexed { index, label ->
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = options.size
+                        ),
+                        onClick = { selectedIndex = index },
+                        selected = index == selectedIndex
+                    ) {
+                        Text(label)
+                    }
+                }
+            }
+        }
+
+        item {
+            if (selectedIndex == 0) {
+                EarnRedCoinsExplanations()
+            } else {
+                SpendRedCoinsExplanations()
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+fun ExplanationsTabPreview() {
+    RedCableClubTheme {
+        Surface {
+            ExplanationsTab(modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)))
+        }
     }
 }
 
@@ -103,7 +184,7 @@ fun EarnRedCoinsExplanations(
     modifier: Modifier = Modifier,
 ) {
 
-    val explanations = listOf<ExplanationItem>(
+    val explanations = listOf(
         ExplanationItem(
             title = stringResource(R.string.earn_explanation_t1),
             body = stringResource(R.string.earn_explanation_b1),
@@ -121,13 +202,112 @@ fun EarnRedCoinsExplanations(
         )
     )
 
+    val equivalenceList = listOf(
+        CurrencyEquivalence(1, BigDecimal(1), "€"),
+        CurrencyEquivalence(
+            1,
+            BigDecimal(0.88).setScale(2, RoundingMode.HALF_EVEN),
+            "£"
+        ),
+        CurrencyEquivalence(
+            1,
+            BigDecimal(10.50).setScale(2, RoundingMode.HALF_EVEN),
+            "SEK"
+        ),
+        CurrencyEquivalence(
+            1,
+            BigDecimal(7.44).setScale(2, RoundingMode.HALF_EVEN),
+            "DKK"
+        )
+    )
+
+    ExplanationBlock(
+        explanations = explanations,
+        equivalenceList = equivalenceList,
+        redCoinsOrder = EuroRedCoinsOrder.EURO_FIRST,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun SpendRedCoinsExplanations(
+    modifier: Modifier = Modifier
+) {
+    val explanations = listOf(
+        ExplanationItem(
+            title = stringResource(R.string.spend_explanation_t1),
+            body = stringResource(R.string.spend_explanation_b1),
+            position = 1
+        ),
+        ExplanationItem(
+            title = stringResource(R.string.spend_explanation_t2),
+            body = stringResource(R.string.spend_explanation_b2),
+            position = 2
+        ),
+        ExplanationItem(
+            title = stringResource(R.string.spend_explanation_t3),
+            body = stringResource(R.string.spend_explanation_b3),
+            position = 3
+        )
+    )
+
+    val equivalenceList = listOf(
+        CurrencyEquivalence(75, BigDecimal(1), "€"),
+        CurrencyEquivalence(
+            85,
+            BigDecimal(1).setScale(2, RoundingMode.HALF_EVEN),
+            "£"
+        ),
+        CurrencyEquivalence(
+            7,
+            BigDecimal(1).setScale(2, RoundingMode.HALF_EVEN),
+            "SEK"
+        ),
+        CurrencyEquivalence(
+            10,
+            BigDecimal(1).setScale(2, RoundingMode.HALF_EVEN),
+            "DKK"
+        )
+    )
+
+    ExplanationBlock(
+        explanations = explanations,
+        equivalenceList = equivalenceList,
+        redCoinsOrder = EuroRedCoinsOrder.REDCOINS_FIRST,
+        modifier = modifier
+    )
+
+}
+
+@Preview
+@Composable
+fun SpendRedCoinsExplanationsPreview() {
+    RedCableClubTheme {
+        Surface {
+            SpendRedCoinsExplanations(modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)))
+        }
+    }
+}
+
+@Composable
+fun ExplanationBlock(
+    explanations: List<ExplanationItem>,
+    equivalenceList: List<CurrencyEquivalence>,
+    modifier: Modifier = Modifier,
+    redCoinsOrder: EuroRedCoinsOrder = EuroRedCoinsOrder.EURO_FIRST
+) {
     Column(
-        modifier = modifier.padding(dimensionResource(R.dimen.padding_medium)),
+        modifier = modifier
+            .padding(dimensionResource(R.dimen.padding_medium)),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
     ) {
-      explanations.forEach {
-          Explanation(explanationItem = it)
-      }
+        explanations.forEach {
+            Explanation(explanationItem = it,
+                equivalenceList = if(it.position == 1)
+                    equivalenceList
+                else null,
+                redCoinsOrder = redCoinsOrder)
+        }
     }
 }
 
@@ -145,6 +325,9 @@ fun EarnRedCoinsExplanationsPreview() {
 fun Explanation(
     explanationItem: ExplanationItem,
     modifier: Modifier = Modifier,
+    equivalenceList: List<CurrencyEquivalence>? = null,
+    redCoinsOrder: EuroRedCoinsOrder = EuroRedCoinsOrder.EURO_FIRST
+
 ) {
     Column(
         horizontalAlignment = Alignment.Start,
@@ -163,6 +346,13 @@ fun Explanation(
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(all = dimensionResource(R.dimen.padding_small))
         )
+        if(equivalenceList != null) {
+            EuroRedCoinsEquivalenceGrid(
+                redCoinsOrder = redCoinsOrder,
+                equivalenceList = equivalenceList,
+                modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_small))
+            )
+        }
     }
 }
 
@@ -224,41 +414,75 @@ fun EuroRedCoinsEquivalenceGrid(
     equivalenceList: List<CurrencyEquivalence>,
     modifier: Modifier = Modifier
 ) {
-    Column {
-        equivalenceList.forEach { currencyEquivalence ->
-            Row {
-                Box(
-                    modifier = Modifier.border(
-                        width = 4.dp,
-                        color = MaterialTheme.colorScheme.primaryContainer
-                    )
+    Card(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(dimensionResource(R.dimen.padding_medium)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small))
+        ) {
+            equivalenceList.forEach { currencyEquivalence ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceAround,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if(redCoinsOrder == EuroRedCoinsOrder.EURO_FIRST) {
-                        Row(modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))) {
+                    val currencyText =
+                        "${currencyEquivalence.currencyValue} ${currencyEquivalence.currencySymbol}"
+
+                    when (redCoinsOrder) {
+                        EuroRedCoinsOrder.EURO_FIRST -> {
                             Text(
-                                text = currencyEquivalence.currencySymbol,
-                                modifier = Modifier.padding(8.dp)
+                                text = currencyText,
+                                style = MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.weight(1f)
                             )
                             Text(
-                                text = currencyEquivalence.currencyValue.toString(),
-                                modifier = Modifier.padding(8.dp)
+                                text = "=",
+                                style = MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.weight(1f)
                             )
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(painter = painterResource(id = R.drawable.red_coins_icon), contentDescription = null)
+                                Text(text = " ${currencyEquivalence.redCoins}", style = MaterialTheme.typography.bodyLarge)
+                            }
                         }
-                    } else {
-                        Row(modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))) {
-                            Icon(painter = painterResource(R.drawable.red_coins_icon), contentDescription = null)
+
+                        EuroRedCoinsOrder.REDCOINS_FIRST -> {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(painter = painterResource(id = R.drawable.red_coins_icon), contentDescription = null)
+                                Text(text = currencyEquivalence.redCoins.toString(), style = MaterialTheme.typography.bodyLarge)
+                            }
+
                             Text(
-                                text = "${currencyEquivalence.redCoins}"
+                                text = "=",
+                                style = MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = currencyText,
+                                style = MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
-
-
                 }
             }
         }
     }
 }
+
 
 @Preview
 @Composable
@@ -267,7 +491,12 @@ fun EuroRedCoinsEquivalenceGridPreview() {
         Surface { 
             EuroRedCoinsEquivalenceGrid(
                 redCoinsOrder = EuroRedCoinsOrder.REDCOINS_FIRST,
-                equivalenceList = listOf(CurrencyEquivalence(1, BigDecimal(1),"€"))
+                equivalenceList = listOf(
+                    CurrencyEquivalence(100, BigDecimal(1),"€"),
+                    CurrencyEquivalence(200, BigDecimal(2),"€"),
+                    CurrencyEquivalence(500, BigDecimal(5),"€")
+                ),
+                modifier = Modifier.padding(16.dp)
             )
         }
     }

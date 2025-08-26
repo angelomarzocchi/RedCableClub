@@ -70,6 +70,7 @@ import com.oneplus.redcableclub.ui.screens.MembershipTierCardCarousel
 import com.oneplus.redcableclub.ui.screens.RedCableClub
 import com.oneplus.redcableclub.ui.screens.RedCableClubUiState
 import com.oneplus.redcableclub.ui.screens.RedCableClubViewModel
+import com.oneplus.redcableclub.ui.screens.RedCoinsCard
 import com.oneplus.redcableclub.ui.screens.Service
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationBar
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationRail
@@ -344,6 +345,8 @@ fun RedCableClubNavDisplay(
                             R.string.red_coins_shop,
                             showNavigateBack = false
                         ))
+                        val userProfile = (redCableClubUiState.userProfileState as ResourceState.Success<UserProfile>).data
+                        RedCoinsCard(redCoins = userProfile.redCoins)
                     }
                 }
 

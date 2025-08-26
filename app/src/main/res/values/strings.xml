@@ -19,7 +19,7 @@
     <string name="copy_code">Copy Coupon code</string>
     <string name="coupon_code_label">Red Cable Club Coupon Code</string>
     <string name="coupon_code">Code: %1$s</string>
-    <string name="red_coins">Red Coins: %1d</string>
+    <string name="red_coins">Red Coins: <b>%1d</b></string>
     <!--FAQ SERVICE -->
     <string name="faq_service_q1">Why am I not able to link my device?</string>
     <string name="faq_service_a1">Only OnePlus devices can be linked with your account. Other devices are not supported for linking. If you see \'Link Failed: Your device has been linked by xxx, please contact customer service for help.\' This means that your device has been activated with another account previously and some device benefits may have been claimed already. You can link another device that has not been activated with another account previously to claim benefits.</string>
@@ -34,6 +34,17 @@
     <string name="earn_explanation_b2">Plenty of official events and activities are also available for every Red Cable Club member to join for free and earn RedCoins!</string>
     <string name="earn_explanation_t3">RedCoins tasks</string>
     <string name="earn_explanation_b3">RedCoins tasks will let you earn more RedCoins.</string>
+
+    <string name="spend_explanation_t1">Redeem Exclusive Products</string>
+    <string name="spend_explanation_b1">You can use RedCoins to redeem exclusive physical or digital products in the RedCoins store.</string>
+    <string name="spend_explanation_t2">Price discount</string>
+    <string name="spend_explanation_b2">You can take advantage of a discount at checkout by using RedCons. Discounts are available on eligible products and for a limited time on oneplus.com and in the official OnePlus Store app. The products on which RedCoins can be applied vary from time to time and on a case-by-case basis, depending on OnePlus\' policy.</string>
+    <string name="spend_explanation_t3">Participation in RedCoins activities</string>
+    <string name="spend_explanation_b3">RedCoins can be used as a threshold for participation in activities, such as using RedCoins to support and invest in products presented by OnePlus.</string>
+    <string name="earn_red_coins">Earn</string>
+    <string name="spend_red_coins">Spend</string>
+
+
     <!--END EXPLANATIONS RED COINS SHOP -->
 
 
