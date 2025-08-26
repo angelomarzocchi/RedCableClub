@@ -2,43 +2,36 @@ package com.oneplus.redcableclub.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
-import androidx.compose.material3.MaterialShapes
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -47,7 +40,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -55,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import com.oneplus.redcableclub.R
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
 import com.oneplus.redcableclub.ui.utils.FaqItem
-import com.oneplus.redcableclub.ui.utils.FaqItemQuestion
 import com.oneplus.redcableclub.ui.utils.FaqItemViewWithCustomExtension
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -119,15 +110,10 @@ fun RedCoinsCard(
 fun ExplanationsTab(
     modifier: Modifier = Modifier
 ) {
-    var selectedIndex by remember { mutableStateOf(0) }
+    var selectedIndex by remember { mutableIntStateOf(0) }
     val options = listOf(stringResource(R.string.earn_red_coins), stringResource(R.string.spend_red_coins))
 
     LazyVerticalGrid(
-       /* modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium))
-
-        */
         columns = GridCells.Fixed(1),
         verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium)),
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium)),
@@ -273,7 +259,7 @@ fun SpendRedCoinsExplanations(
     ExplanationBlock(
         explanations = explanations,
         equivalenceList = equivalenceList,
-        redCoinsOrder = EuroRedCoinsOrder.REDCOINS_FIRST,
+        redCoinsOrder = EuroRedCoinsOrder.RED_COINS_FIRST,
         modifier = modifier
     )
 
@@ -364,7 +350,7 @@ fun ExplanationPreview() {
             Explanation(
                 ExplanationItem(
                 title = "Title example",
-                body = "This is the explanation body. It should expain how the body works",
+                body = "This is the explanation body. It should explain how the body works",
                 position = 1
                 )
             )
@@ -403,7 +389,7 @@ fun NumberIcon(
 
 enum class EuroRedCoinsOrder {
     EURO_FIRST,
-    REDCOINS_FIRST
+    RED_COINS_FIRST
 }
 
 data class CurrencyEquivalence(val redCoins: Int, val currencyValue: BigDecimal, val currencySymbol: String)
@@ -454,7 +440,7 @@ fun EuroRedCoinsEquivalenceGrid(
                             }
                         }
 
-                        EuroRedCoinsOrder.REDCOINS_FIRST -> {
+                        EuroRedCoinsOrder.RED_COINS_FIRST -> {
                             Row(
                                 horizontalArrangement = Arrangement.Center,
                                 modifier = Modifier.weight(1f)
@@ -490,7 +476,7 @@ fun EuroRedCoinsEquivalenceGridPreview() {
     RedCableClubTheme {
         Surface { 
             EuroRedCoinsEquivalenceGrid(
-                redCoinsOrder = EuroRedCoinsOrder.REDCOINS_FIRST,
+                redCoinsOrder = EuroRedCoinsOrder.RED_COINS_FIRST,
                 equivalenceList = listOf(
                     CurrencyEquivalence(100, BigDecimal(1),"€"),
                     CurrencyEquivalence(200, BigDecimal(2),"€"),
