@@ -20,6 +20,10 @@
     <string name="coupon_code_label">Red Cable Club Coupon Code</string>
     <string name="coupon_code">Code: %1$s</string>
     <string name="red_coins">Red Coins: <b>%1d</b></string>
+    <string name="red_coins_required">Red Coins Required: %1d</string>
+    <string name="price">€%1$.2f</string>
+    <string name="products">Products</string>
+    <string name="coupons_and_services">Coupons and Services</string>
     <!--FAQ SERVICE -->
     <string name="faq_service_q1">Why am I not able to link my device?</string>
     <string name="faq_service_a1">Only OnePlus devices can be linked with your account. Other devices are not supported for linking. If you see \'Link Failed: Your device has been linked by xxx, please contact customer service for help.\' This means that your device has been activated with another account previously and some device benefits may have been claimed already. You can link another device that has not been activated with another account previously to claim benefits.</string>
@@ -43,8 +47,6 @@
     <string name="spend_explanation_b3">RedCoins can be used as a threshold for participation in activities, such as using RedCoins to support and invest in products presented by OnePlus.</string>
     <string name="earn_red_coins">Earn</string>
     <string name="spend_red_coins">Spend</string>
-
-
     <!--END EXPLANATIONS RED COINS SHOP -->
 
 

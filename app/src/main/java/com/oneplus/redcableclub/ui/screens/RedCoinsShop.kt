@@ -2,11 +2,14 @@ package com.oneplus.redcableclub.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,12 +23,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,19 +42,150 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.oneplus.redcableclub.R
+import com.oneplus.redcableclub.data.FakeRedCoinsShopRepository
+import com.oneplus.redcableclub.data.model.Benefit
+import com.oneplus.redcableclub.data.model.Product
+import com.oneplus.redcableclub.data.model.ShopItem
+import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
 import com.oneplus.redcableclub.ui.utils.FaqItem
 import com.oneplus.redcableclub.ui.utils.FaqItemViewWithCustomExtension
+import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
 import java.math.BigDecimal
 import java.math.RoundingMode
+
+
+@Composable
+fun ProductCard(
+    product: ShopItem,
+    modifier: Modifier = Modifier
+) {
+
+    Card(modifier = modifier) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))) {
+            when(product) {
+                is Product -> ProductImage(
+                    imageUrl = product.imageUrls[0],
+                    contentDescription = product.name,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                is Benefit -> Text("")
+            }
+            Text(text = product.name, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+            Row(
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small))
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.red_coins_icon),
+                        tint = MaterialTheme.colorScheme.primary,
+                        contentDescription = null,
+                        modifier = Modifier.size(MaterialTheme.typography.titleMedium.fontSize.value.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.red_coins, product.redCoinsRequired),
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                when (product) {
+                    is Product -> Text(stringResource(R.string.price, product.price))
+                    is Benefit -> Spacer(modifier = Modifier)
+                }
+            }
+
+
+        }
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ProductImage(
+    imageUrl: String,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    size: Dp = dimensionResource(R.dimen.product_image_size),
+    borderWidth: Dp = dimensionResource(R.dimen.padding_extra_small),
+    borderColor: Color = MaterialTheme.colorScheme.secondary
+    ) {
+
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(imageUrl)
+            .crossfade(true)
+            .build(),
+        contentDescription = contentDescription,
+        modifier = modifier
+            .aspectRatio(1f)
+            .size(size)
+            .clip(CircleShape)
+            .border(borderWidth, borderColor, CircleShape)
+            ,
+        loading = {
+            Box(
+                modifier = modifier
+                    .size(size)
+                    .clip(MaterialShapes.Fan.toShape())
+                    .border(borderWidth, borderColor, MaterialShapes.Fan.toShape())
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .aspectRatio(1f)
+                    .shimmerLoadingAnimation()
+            )
+        }
+    )
+
+}
+
+@Preview
+@Composable
+fun ProductCardBenefitPreview() {
+    val product = Benefit(
+        name = "10% off on OnePlus products",
+        redCoinsRequired = 100,
+        description = "Get 10% off on all OnePlus products when you redeem this coupon."
+    )
+    RedCableClubTheme {
+        Surface {
+            ProductCard(product = product, modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)))
+        }
+    }
+
+}
+
+@Preview
+@Composable
+fun ProductCardPreview() {
+
+    RedCableClubTheme {
+        Surface {
+            ProductCard(product = RedCableClubApiServiceMock.storeProducts[0], modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)))
+        }
+    }
+
+}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable

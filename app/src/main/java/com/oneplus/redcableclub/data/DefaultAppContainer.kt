@@ -7,6 +7,7 @@ import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 interface AppContainer {
     val adsRepository: AdRepository
     val userProfileRepository: UserProfileRepository
+    val redCoinsShopRepository: RedCoinsShopRepository
 }
 
 class DefaultAppContainer(): AppContainer {
@@ -17,6 +18,10 @@ class DefaultAppContainer(): AppContainer {
 
     override val userProfileRepository: UserProfileRepository by lazy {
         FakeUserProfileRepository(mockRedCableClubApiService)
+    }
+
+    override val redCoinsShopRepository: RedCoinsShopRepository by lazy {
+        FakeRedCoinsShopRepository(mockRedCableClubApiService)
     }
 
     private val mockRedCableClubApiService = RedCableClubApiServiceMock()

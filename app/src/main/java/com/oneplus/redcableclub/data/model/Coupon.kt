@@ -1,16 +1,14 @@
 package com.oneplus.redcableclub.data.model
 
-import java.time.LocalDate
-
 abstract class Coupon(
     val code: String,
     val description: String,
-    val productCategories: List<ProductCategory>,
+    val productCategories: List<CouponProductCategory>,
 ) {
     var isRedeemed = false
     abstract fun calculateDiscount(price: Double): Double
 
-    open fun isValidFor(productCategory: ProductCategory): Boolean {
+    open fun isValidFor(productCategory: CouponProductCategory): Boolean {
         return productCategories.contains(productCategory)
     }
 }
@@ -18,7 +16,7 @@ abstract class Coupon(
 class AmountCoupon(
     code: String,
     description: String,
-    productCategories: List<ProductCategory>,
+    productCategories: List<CouponProductCategory>,
     val amountOff: Double,
 ) : Coupon(code, description, productCategories) {
     override fun calculateDiscount(price: Double): Double {
@@ -29,7 +27,7 @@ class AmountCoupon(
 class PercentageCoupon(
     code: String,
     description: String,
-    productCategories: List<ProductCategory>,
+    productCategories: List<CouponProductCategory>,
     val percentageOff: Double,
 ) : Coupon(code, description, productCategories) {
     init {
@@ -46,7 +44,7 @@ object CouponFactory {
     fun createAmountCoupon(
         code: String,
         description: String,
-        productCategories: List<ProductCategory>,
+        productCategories: List<CouponProductCategory>,
         amountOff: Double,
         isRedeemed: Boolean = false
     ): Coupon   {
@@ -57,7 +55,7 @@ object CouponFactory {
     fun createPercentageCoupon(
         code: String,
         description: String,
-        productCategories: List<ProductCategory>,
+        productCategories: List<CouponProductCategory>,
         percentageOff: Double,
         isRedeemed: Boolean = false
     ): Coupon {

@@ -20,4 +20,5 @@
     <dimen name="icon_size">16dp</dimen>
     <dimen name="top_bar_icon_size">64dp</dimen>
     <dimen name="max_carousel_height">250dp</dimen>
+    <dimen name="product_image_size">100dp</dimen>
 </resources>

@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-08-23T14:23:08.918636500Z">
+        <DropdownSelection timestamp="2025-08-26T19:45:53.415392600Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\angel\.android\avd\OnePlus_13.avd" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=a992be9b" />
             </handle>
           </Target>
         </DropdownSelection>
@@ -40,6 +40,14 @@
       </SelectionState>
       <SelectionState runConfigName="RedCoinsCardPreview">
         <option name="selectionMode" value="DROPDOWN" />
+        <DropdownSelection timestamp="2025-08-25T18:30:36.822199Z">
+          <Target type="DEFAULT_BOOT">
+            <handle>
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\angel\.android\avd\OnePlus_13.avd" />
+            </handle>
+          </Target>
+        </DropdownSelection>
+        <DialogSelection />
       </SelectionState>
       <SelectionState runConfigName="FaqItemViewWithCustomExtensionPreview">
         <option name="selectionMode" value="DROPDOWN" />
