@@ -34,4 +34,5 @@ data class Benefit(
    override val redCoinsRequired: Int,
    override val displayCategory: RedCoinsShopCategory = RedCoinsShopCategory.COUPONS_AND_SERVICES,
    val description: String,
+   val iconText: String
 ) : ShopItem

@@ -249,12 +249,14 @@ class RedCableClubApiServiceMock(): RedCableClubApiService {
             Benefit(
                 name = "10€ off OnePlus Devices",
                 redCoinsRequired = 750,
-                description = "Get a 10€ off any OnePlus device you buy."
+                description = "Get a 10€ off any OnePlus device you buy.",
+                iconText = "-10€"
             ),
             Benefit(
                 name = "30% off OnePlus Audio Devices",
                 redCoinsRequired = 500,
-                description = "Get a 30% off any OnePlus Audio device you buy."
+                description = "Get a 30% off any OnePlus Audio device you buy.",
+                iconText = "-30%"
             )
         )
 

@@ -77,6 +77,7 @@ fun ProductCard(
     Card(modifier = modifier) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium)),
             modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))) {
             when(product) {
                 is Product -> ProductImage(
@@ -84,34 +85,55 @@ fun ProductCard(
                     contentDescription = product.name,
                     modifier = Modifier.fillMaxWidth()
                 )
-                is Benefit -> Text("")
+                is Benefit -> ProductBenefitIcon(
+                    iconText = product.iconText,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
-            Text(text = product.name, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
-            Row(
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small))
             ) {
+                Text(
+                    text = product.name,
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                )
                 Row(
+                    horizontalArrangement = Arrangement.Center, // Changed from SpaceAround
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small))
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.red_coins_icon),
-                        tint = MaterialTheme.colorScheme.primary,
-                        contentDescription = null,
-                        modifier = Modifier.size(MaterialTheme.typography.titleMedium.fontSize.value.dp)
-                    )
-                    Text(
-                        text = stringResource(R.string.red_coins, product.redCoinsRequired),
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center
-                    )
-                }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_extra_small)) // Adjusted spacing
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.red_coins_icon),
+                            tint = MaterialTheme.colorScheme.primary,
+                            contentDescription = null,
+                            modifier = Modifier.size(dimensionResource(R.dimen.red_coins_product_card_size))
+                        )
+                        Text(
+                            text = stringResource(R.string.red_coins, product.redCoinsRequired),
+                            style = MaterialTheme.typography.titleMedium,
+                            textAlign = TextAlign.Center
+                        )
+                    }
 
-                when (product) {
-                    is Product -> Text(stringResource(R.string.price, product.price))
-                    is Benefit -> Spacer(modifier = Modifier)
+                    when (product) {
+                        is Product -> {
+                            Text(
+                                text = " + ", // Added separator
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_extra_small))
+                            )
+                            Text(
+                                text = stringResource(R.string.price, product.price),
+                                style = MaterialTheme.typography.titleMedium // Matched style for consistency
+                            )
+                        }
+                        is Benefit -> Spacer(modifier = Modifier) // No price for benefits
+                    }
                 }
             }
 
@@ -129,34 +151,78 @@ fun ProductImage(
     modifier: Modifier = Modifier,
     size: Dp = dimensionResource(R.dimen.product_image_size),
     borderWidth: Dp = dimensionResource(R.dimen.padding_extra_small),
-    borderColor: Color = MaterialTheme.colorScheme.secondary
+    borderColor: Color = MaterialTheme.colorScheme.secondary,
+    innerBackgroundColor: Color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
 
-    SubcomposeAsyncImage(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(imageUrl)
-            .crossfade(true)
-            .build(),
-        contentDescription = contentDescription,
-        modifier = modifier
+    Box(
+        modifier =modifier
             .aspectRatio(1f)
             .size(size)
             .clip(CircleShape)
+            .background(innerBackgroundColor)
             .border(borderWidth, borderColor, CircleShape)
-            ,
-        loading = {
-            Box(
-                modifier = modifier
-                    .size(size)
-                    .clip(MaterialShapes.Fan.toShape())
-                    .border(borderWidth, borderColor, MaterialShapes.Fan.toShape())
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .aspectRatio(1f)
-                    .shimmerLoadingAnimation()
+            .padding(dimensionResource(R.dimen.padding_large))
+    ) {
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(imageUrl)
+                .crossfade(true)
+                .build(),
+            contentDescription = contentDescription,
+            loading = {
+                Box(
+                    modifier = modifier
+                        .size(size)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .shimmerLoadingAnimation()
+                )
+            }
+        )
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ProductBenefitIcon(
+    iconText: String,
+    modifier: Modifier = Modifier,
+    size: Dp = dimensionResource(R.dimen.product_image_size),
+    borderWidth: Dp = dimensionResource(R.dimen.padding_extra_small),
+    borderColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
+    innerBackgroundColor: Color = MaterialTheme.colorScheme.primaryContainer
+) {
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .size(size)
+            .clip(MaterialShapes.Pill.toShape())
+            .background(innerBackgroundColor)
+            .border(borderWidth, borderColor, MaterialShapes.Pill.toShape())
+            .padding(dimensionResource(R.dimen.padding_large)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = iconText,
+            style = MaterialTheme.typography.displayLargeEmphasized.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onPrimary,
+            autoSize = TextAutoSize.StepBased()
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Preview
+@Composable
+fun ProductBenefitIconPreview() {
+    RedCableClubTheme {
+        Surface {
+            ProductBenefitIcon(
+                iconText = "-10%"
             )
         }
-    )
-
+    }
 }
 
 @Preview
@@ -165,7 +231,8 @@ fun ProductCardBenefitPreview() {
     val product = Benefit(
         name = "10% off on OnePlus products",
         redCoinsRequired = 100,
-        description = "Get 10% off on all OnePlus products when you redeem this coupon."
+        description = "Get 10% off on all OnePlus products when you redeem this coupon.",
+        iconText = "-10%"
     )
     RedCableClubTheme {
         Surface {
@@ -610,7 +677,7 @@ fun EuroRedCoinsEquivalenceGrid(
 @Composable
 fun EuroRedCoinsEquivalenceGridPreview() {
     RedCableClubTheme {
-        Surface { 
+        Surface {
             EuroRedCoinsEquivalenceGrid(
                 redCoinsOrder = EuroRedCoinsOrder.RED_COINS_FIRST,
                 equivalenceList = listOf(
