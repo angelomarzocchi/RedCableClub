@@ -34,6 +34,7 @@ import com.oneplus.redcableclub.R
 
 data class TopBarState(
     val textResource: Int,
+    val textResourceArgs: List<Any> = emptyList(),
     val showNavigateBack: Boolean = false,
     val navigateBack: () -> Unit = {},
     val icon : Int? = null,
@@ -44,6 +45,7 @@ data class TopBarState(
 @Composable
 fun RedCableClubTopBar(
     @StringRes textResource: Int,
+    textResourceArgs: List<Any> = emptyList(),
     scrollBehavior: TopAppBarScrollBehavior,
     modifier : Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {},
@@ -87,7 +89,7 @@ fun RedCableClubTopBar(
                 }
                     AnimatedContent(targetState = textResource) {title ->
                         Text(
-                            text = stringResource(id = title),
+                            text = stringResource(id = title, *textResourceArgs.toTypedArray()),
                             style = MaterialTheme.typography.headlineLarge,
                             color = MaterialTheme.colorScheme.primary,
                         )

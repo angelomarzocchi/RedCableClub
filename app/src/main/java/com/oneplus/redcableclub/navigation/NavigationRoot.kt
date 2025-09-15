@@ -6,6 +6,9 @@ package com.oneplus.redcableclub.navigation
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
@@ -33,7 +36,10 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -49,17 +55,21 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSavedStateNavEntryDecorator
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigation3.ui.rememberSceneSetupNavEntryDecorator
 import com.oneplus.redcableclub.R
 import com.oneplus.redcableclub.data.model.Achievement
 import com.oneplus.redcableclub.data.model.Coupon
+import com.oneplus.redcableclub.data.model.ShopItem
 import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.screens.Achievements
@@ -71,6 +81,10 @@ import com.oneplus.redcableclub.ui.screens.RedCableClub
 import com.oneplus.redcableclub.ui.screens.RedCableClubUiState
 import com.oneplus.redcableclub.ui.screens.RedCableClubViewModel
 import com.oneplus.redcableclub.ui.screens.RedCoinsCard
+import com.oneplus.redcableclub.ui.screens.RedCoinsProductDetail
+import com.oneplus.redcableclub.ui.screens.RedCoinsShop
+import com.oneplus.redcableclub.ui.screens.RedCoinsShopUiState
+import com.oneplus.redcableclub.ui.screens.RedCoinsShopViewModel
 import com.oneplus.redcableclub.ui.screens.Service
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationBar
 import com.oneplus.redcableclub.ui.utils.RedCableClubNavigationRail
@@ -95,6 +109,9 @@ data object CouponsScreen: NavKey
 data object RedCoinsShopScreen: NavKey
 
 @Serializable
+data class RedCoinsProductDetailScreen(val shopItem: ShopItem, val contentKey: String): NavKey
+
+@Serializable
 data object ServiceDetailScreen: NavKey
 
 
@@ -110,9 +127,11 @@ fun NavigationRoot(
 ) {
     val redCableClubViewModel: RedCableClubViewModel = viewModel(factory = RedCableClubViewModel.Factory)
     val achievementsViewModel: AchievementsViewModel = viewModel(factory = AchievementsViewModel.Factory)
+    val redCoinsShopViewModel: RedCoinsShopViewModel = viewModel(factory = RedCoinsShopViewModel.Factory)
 
-    val redCableClubUiState by redCableClubViewModel.uiState.collectAsState()
+    val redCableClubUiState by redCableClubViewModel.uiState.collectAsStateWithLifecycle()
     val achievementsUiState by achievementsViewModel.uiState.collectAsState()
+    val redCoinsShopUiState by redCoinsShopViewModel.uiState.collectAsState()
 
     val backStack = rememberNavBackStack(RedCableClubScreen)
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
@@ -144,6 +163,7 @@ fun NavigationRoot(
                     RedCableClubTopBar(
                         scrollBehavior = scrollBehavior,
                         textResource = text,
+                        textResourceArgs = topBarState.textResourceArgs,
                         showNavigateBack = topBarState.showNavigateBack,
                         icon = topBarState.icon,
                         navigateBack = topBarState.navigateBack
@@ -212,7 +232,9 @@ fun NavigationRoot(
                         onAchievementSelected = {achievementsViewModel.selectAchievement(it)},
                         insets = insets,
                         mainContentWidthInPx = mainContentSize,
-                        onCouponRedeemed = { redCableClubViewModel.onCouponRedeemed(it) }
+                        onCouponRedeemed = { redCableClubViewModel.onCouponRedeemed(it) },
+                        redCoinsShopViewModel = redCoinsShopViewModel,
+                        redCoinsShopUiState = redCoinsShopUiState
                     )
 
             }
@@ -232,7 +254,9 @@ fun NavigationRoot(
                     onAchievementSelected = {achievementsViewModel.selectAchievement(it)},
                     insets = insets,
                     mainContentWidthInPx = mainContentSize,
-                    onCouponRedeemed = {}
+                    onCouponRedeemed = { redCableClubViewModel.onCouponRedeemed(it) },
+                    redCoinsShopViewModel = redCoinsShopViewModel,
+                    redCoinsShopUiState = redCoinsShopUiState
                 )
             }
         )
@@ -248,138 +272,213 @@ fun showNavigation(navKey: NavKey?): Boolean {
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun RedCableClubNavDisplay(
     modifier: Modifier,
-    backStack: androidx.navigation3.runtime.NavBackStack,
+    backStack: NavBackStack,
     onTopBarStateChange: (TopBarState) -> Unit,
     redCableClubUiState: RedCableClubUiState,
     achievementsUiState: AchievementsUiState,
+    redCoinsShopViewModel: RedCoinsShopViewModel,
+    redCoinsShopUiState: RedCoinsShopUiState,
     onAchievementSelected: (Achievement) -> Unit,
     onCouponRedeemed: (Coupon) -> Unit,
     insets: WindowInsets,
     mainContentWidthInPx: Int,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    NavDisplay(
-        modifier = modifier,
-        backStack = backStack,
-        entryDecorators = listOf(
-            rememberSceneSetupNavEntryDecorator(),
-            rememberSavedStateNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator()
-        ),
-        entryProvider = { route ->
-            when(route) {
-                is RedCableClubScreen -> {
-                    NavEntry(key = route) {
-                        Log.d("NavigationRoot", "RedCableClubScreen")
-                        onTopBarStateChange(TopBarState(R.string.app_name, showNavigateBack = false, icon = R.drawable.red_cable_club_icon))
-                        RedCableClub(
-                            uiState = redCableClubUiState,
-                            onAchievementDetailClick = {
-                                backStack.addLast(AchievementScreen)
-                            },
-                            onShowAllCouponsClick = {
-                                coroutineScope.launch {
-                                    delay(300L)
-                                    backStack.addLast(CouponsScreen)
-                                }
-                            },
-                            paddingValues = insets.asPaddingValues(),
 
-                            )
-                    }
-                }
-                is AchievementScreen -> {
-                    NavEntry(key = route) {
-                        Log.d("NavigationRoot", "AchievementScreen")
-                        onTopBarStateChange(TopBarState(
-                            R.string.achievements,
-                            showNavigateBack = true,
-                            navigateBack = {
-                                backStack.remove(AchievementScreen)
-                            },
-                            isNavigatingBack = true
-                        ))
-                        Achievements(
-                            achievements = (
-                                    achievementsUiState.achievementsUiState as ResourceState.Success<List<Achievement>>
-                                    ).data,
-                            selectedAchievement = achievementsUiState.selectedAchievement,
-                            onItemSelected = { achievement ->
-                                onAchievementSelected(achievement)
-                            },
-                            paddingValues = insets.asPaddingValues()
-                        )
-
-
-                    }
-                }
-                is CouponsScreen -> {
-                    NavEntry(key = route) {
-                        Log.d("NavigationRoot", "CouponsScreen")
-                        onTopBarStateChange(TopBarState(
-                            R.string.coupons,
-                            showNavigateBack = true,
-                            navigateBack = {
-                                backStack.remove(CouponsScreen)
-                            },
-                            isNavigatingBack = true
-                        ))
-                        val userProfile = (redCableClubUiState.userProfileState as ResourceState.Success<UserProfile>).data
-                        Coupons(
-                            coupons = userProfile.wallet,
-                            redExpPoints = userProfile.redExpPoints,
-                            onCouponRedeemed = { onCouponRedeemed(it) },
-                            paddingValues = insets.asPaddingValues()
-                        )
-                    }
-                }
-
-                is RedCoinsShopScreen -> {
-                    NavEntry(key = route) {
-                        Log.d("NavigationRoot", "RedCoinsShopScreen")
-                        onTopBarStateChange(TopBarState(
-                            R.string.red_coins_shop,
-                            showNavigateBack = false
-                        ))
-                        val userProfile = (redCableClubUiState.userProfileState as ResourceState.Success<UserProfile>).data
-                        RedCoinsCard(redCoins = userProfile.redCoins)
-                    }
-                }
-
-                is ServiceDetailScreen -> {
-                    NavEntry(key = route) {
-                        Log.d("NavigationRoot", "ServiceScreen")
-                        onTopBarStateChange(TopBarState(
-                            R.string.service_detail,
-                            showNavigateBack = false,
-                            isNavigatingBack = false
-                        ))
-                        val userProfile = (redCableClubUiState.userProfileState as ResourceState.Success<UserProfile>).data
-                        Service(
-                            devices = userProfile.devices
-                        )
-                    }
-                }
-
-                else -> {
-                    NavEntry(key = RedCableClubScreen) {}
-                }
-            }
-        }, transitionSpec = {
-            slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth + mainContentWidthInPx }) + fadeIn() togetherWith
-                    slideOutHorizontally(targetOffsetX = { fullWidth -> -fullWidth - mainContentWidthInPx }) + fadeOut()
-        },
-        popTransitionSpec = {
-            slideInHorizontally(initialOffsetX = { fullWidth -> -fullWidth - mainContentWidthInPx }) + fadeIn() togetherWith
-                    slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth + mainContentWidthInPx }) + fadeOut()
-        },
-        predictivePopTransitionSpec = {
-            slideInHorizontally(initialOffsetX = { fullWidth -> -fullWidth - mainContentWidthInPx }) + fadeIn() togetherWith
-                    slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth + mainContentWidthInPx }) + fadeOut()
-        }
+    val entryDecorators = listOf(
+        rememberSceneSetupNavEntryDecorator(),
+        rememberSavedStateNavEntryDecorator(),
+        rememberViewModelStoreNavEntryDecorator()
     )
+
+    val localNavSharedTransitionScope: ProvidableCompositionLocal<SharedTransitionScope> =
+        compositionLocalOf {
+            throw IllegalStateException(
+                "Unexpected access to LocalNavSharedTransitionScope. You must provide a " +
+                        "SharedTransitionScope from a call to SharedTransitionLayout() or " +
+                        "SharedTransitionScope()"
+            )
+        }
+    SharedTransitionLayout {
+        CompositionLocalProvider(localNavSharedTransitionScope provides this) {
+            NavDisplay(
+                modifier = modifier,
+                backStack = backStack,
+                entryDecorators = entryDecorators,
+                entryProvider = { route ->
+                    when (route) {
+                        is RedCableClubScreen -> {
+                            NavEntry(key = route) {
+                                Log.d("NavigationRoot", "RedCableClubScreen")
+                                onTopBarStateChange(
+                                    TopBarState(
+                                        R.string.app_name,
+                                        showNavigateBack = false,
+                                        icon = R.drawable.red_cable_club_icon
+                                    )
+                                )
+                                RedCableClub(
+                                    uiState = redCableClubUiState,
+                                    onAchievementDetailClick = {
+                                        backStack.addLast(AchievementScreen)
+                                    },
+                                    onShowAllCouponsClick = {
+                                        coroutineScope.launch {
+                                            delay(300L)
+                                            backStack.addLast(CouponsScreen)
+                                        }
+                                    },
+                                    paddingValues = insets.asPaddingValues(),
+
+                                    )
+                            }
+                        }
+
+                        is AchievementScreen -> {
+                            NavEntry(key = route) {
+                                Log.d("NavigationRoot", "AchievementScreen")
+                                onTopBarStateChange(
+                                    TopBarState(
+                                        R.string.achievements,
+                                        showNavigateBack = true,
+                                        navigateBack = {
+                                            backStack.remove(AchievementScreen)
+                                        },
+                                        isNavigatingBack = true
+                                    )
+                                )
+                                Achievements(
+                                    achievements = (
+                                            achievementsUiState.achievementsUiState as ResourceState.Success<List<Achievement>>
+                                            ).data,
+                                    selectedAchievement = achievementsUiState.selectedAchievement,
+                                    onItemSelected = { achievement ->
+                                        onAchievementSelected(achievement)
+                                    },
+                                    paddingValues = insets.asPaddingValues()
+                                )
+
+
+                            }
+                        }
+
+                        is CouponsScreen -> {
+                            NavEntry(key = route) {
+                                Log.d("NavigationRoot", "CouponsScreen")
+                                onTopBarStateChange(
+                                    TopBarState(
+                                        R.string.coupons,
+                                        showNavigateBack = true,
+                                        navigateBack = {
+                                            backStack.remove(CouponsScreen)
+                                        },
+                                        isNavigatingBack = true
+                                    )
+                                )
+                                val userProfile =
+                                    (redCableClubUiState.userProfileState as ResourceState.Success<UserProfile>).data
+                                Coupons(
+                                    coupons = userProfile.wallet,
+                                    redExpPoints = userProfile.redExpPoints,
+                                    onCouponRedeemed = { onCouponRedeemed(it) },
+                                    paddingValues = insets.asPaddingValues()
+                                )
+                            }
+                        }
+
+                        is RedCoinsShopScreen -> {
+                            NavEntry(key = route) {
+                                Log.d("NavigationRoot", "RedCoinsShopScreen")
+                                redCoinsShopViewModel.getRedCoinsShopItems()
+                                onTopBarStateChange(
+                                    TopBarState(
+                                        R.string.red_coins_shop,
+                                        showNavigateBack = false
+                                    )
+                                )
+                                val userProfile =
+                                    (redCableClubUiState.userProfileState as ResourceState.Success<UserProfile>).data
+
+                                RedCoinsShop(
+                                    redCoinsShopUiState = redCoinsShopUiState,
+                                    redCoins = userProfile.redCoins,
+                                    sharedTransitionScope = this@SharedTransitionLayout,
+                                    animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                                    onProductClick = { shopItem, contentKey ->
+                                        backStack.addLast(
+                                            RedCoinsProductDetailScreen(
+                                                shopItem,
+                                                contentKey
+                                            )
+                                        )
+                                    }
+                                )
+                            }
+                        }
+
+                        is RedCoinsProductDetailScreen -> {
+                            NavEntry(key = route) {
+                                Log.d("NavigationRoot", "RedCoinsProductDetailScreen")
+                                onTopBarStateChange(
+                                    TopBarState(
+                                        textResource = R.string.red_coins_detail_top_bar,
+                                        showNavigateBack = true,
+                                        navigateBack = {
+                                            backStack.removeLastOrNull()
+                                        }
+                                    )
+                                )
+
+                                RedCoinsProductDetail(
+                                    shopItem = route.shopItem,
+                                    sharedTransitionScope = this@SharedTransitionLayout,
+                                    animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                                    contentKey = route.contentKey
+                                )
+
+
+                                }
+                        }
+
+                        is ServiceDetailScreen -> {
+                            NavEntry(key = route) {
+                                Log.d("NavigationRoot", "ServiceScreen")
+                                onTopBarStateChange(
+                                    TopBarState(
+                                        R.string.service_detail,
+                                        showNavigateBack = false,
+                                        isNavigatingBack = false
+                                    )
+                                )
+                                val userProfile =
+                                    (redCableClubUiState.userProfileState as ResourceState.Success<UserProfile>).data
+                                Service(
+                                    devices = userProfile.devices
+                                )
+                            }
+                        }
+
+                        else -> {
+                            NavEntry(key = RedCableClubScreen) {}
+                        }
+                    }
+                }, transitionSpec = {
+                    slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth + mainContentWidthInPx }) + fadeIn() togetherWith
+                            slideOutHorizontally(targetOffsetX = { fullWidth -> -fullWidth - mainContentWidthInPx }) + fadeOut()
+                },
+                popTransitionSpec = {
+                    slideInHorizontally(initialOffsetX = { fullWidth -> -fullWidth - mainContentWidthInPx }) + fadeIn() togetherWith
+                            slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth + mainContentWidthInPx }) + fadeOut()
+                },
+                predictivePopTransitionSpec = {
+                    slideInHorizontally(initialOffsetX = { fullWidth -> -fullWidth - mainContentWidthInPx }) + fadeIn() togetherWith
+                            slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth + mainContentWidthInPx }) + fadeOut()
+                }
+            )
+        }
+    }
 }

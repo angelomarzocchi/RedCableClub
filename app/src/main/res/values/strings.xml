@@ -47,6 +47,10 @@
     <string name="spend_explanation_b3">RedCoins can be used as a threshold for participation in activities, such as using RedCoins to support and invest in products presented by OnePlus.</string>
     <string name="earn_red_coins">Earn</string>
     <string name="spend_red_coins">Spend</string>
+    <string name="filter_all">All</string>
+    <string name="filter_products">Products</string>
+    <string name="filter_benefits">Benefits</string>
+    <string name="red_coins_detail_top_bar">Detail</string>
     <!--END EXPLANATIONS RED COINS SHOP -->
 
 

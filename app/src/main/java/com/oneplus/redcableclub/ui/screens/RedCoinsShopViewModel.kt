@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class RedCoinsShopUiState(
-    val redCoinsShopUiState: ResourceState<List<ShopItem>> = ResourceState.Loading,
+    val shopItems: ResourceState<List<ShopItem>> = ResourceState.Loading,
 )
 
 class RedCoinsShopViewModel(
@@ -27,20 +27,21 @@ class RedCoinsShopViewModel(
 
 
     fun getRedCoinsShopItems() {
+        if(_uiState.value.shopItems is ResourceState.Success) return
         viewModelScope.launch {
             _uiState.update {
-                it.copy(redCoinsShopUiState = ResourceState.Loading)
+                it.copy(shopItems = ResourceState.Loading)
             }
             try {
                 val shopItems = RedCoinsShopRepository.getRedCoinsShopItems()
                 _uiState.update {
                     it.copy(
-                        redCoinsShopUiState = ResourceState.Success(
+                        shopItems = ResourceState.Success(
                             shopItems)
                     ) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(
-                    redCoinsShopUiState = ResourceState.Error(
+                    shopItems = ResourceState.Error(
                         message = e.message)
                 ) }
             }

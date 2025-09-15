@@ -19,7 +19,6 @@ fun FrostedGlassBox(
     Box(
         modifier = modifier
             .clip(shape)
-            .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surface.copy(alpha = alpha))
 
     ) {

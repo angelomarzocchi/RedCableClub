@@ -14,7 +14,7 @@ sealed interface ShopItem {
    val displayCategory: RedCoinsShopCategory
 }
 
-data class KeySellingPoint(
+data class  KeySellingPoint(
    val title: String,
    val description: String,
    val imageUri: String
