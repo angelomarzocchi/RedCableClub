@@ -239,26 +239,31 @@ fun ProductBenefitIconLoadingPreview() {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun RedCoins(redCoins: Int, modifier : Modifier = Modifier) {
-    Row(
-        modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_extra_small)) // Adjusted spacing
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.red_coins_icon),
-            tint = MaterialTheme.colorScheme.primary,
-            contentDescription = null,
-            modifier = Modifier.size(dimensionResource(R.dimen.red_coins_product_card_size))
-        )
-        Text(
-            text = "$redCoins",
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            autoSize = TextAutoSize.StepBased(maxFontSize = MaterialTheme.typography.titleMedium.fontSize)
-        )
-    }
+fun RedCoins(
+    redCoins: Int,
+    modifier : Modifier = Modifier) {
+
+        Row(
+            modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_extra_small)) // Adjusted spacing
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.red_coins_icon),
+                tint = MaterialTheme.colorScheme.primary,
+                contentDescription = null,
+                modifier = Modifier.size(dimensionResource(R.dimen.red_coins_product_card_size))
+            )
+            Text(
+                text = "$redCoins",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                autoSize = TextAutoSize.StepBased(maxFontSize = MaterialTheme.typography.titleMedium.fontSize)
+            )
+        }
+
 }
 
 /**
@@ -270,6 +275,7 @@ object SharedElementKeys {
 
     private const val PREFIX_IMAGE = "product_image_"
     private const val PREFIX_NAME = "product_name_"
+    private const val PREFIX_KSP = "ksp_"
 
     /**
      * Generates the unique key for a product's image or benefit icon.
@@ -282,6 +288,8 @@ object SharedElementKeys {
      * @param contentKey The unique identifier of the ShopItem (e.g., product name).
      */
     fun getNameKey(contentKey: String): String = "$PREFIX_NAME$contentKey"
+
+    fun getKspKey(contentKey: String): String = "$PREFIX_KSP$contentKey$"
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)

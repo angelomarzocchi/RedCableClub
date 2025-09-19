@@ -51,6 +51,8 @@
     <string name="filter_products">Products</string>
     <string name="filter_benefits">Benefits</string>
     <string name="red_coins_detail_top_bar">Detail</string>
+    <string name="network_error">Network error: please try again later</string>
+    <string name="buy_now">Buy Now</string>
     <!--END EXPLANATIONS RED COINS SHOP -->
 
 

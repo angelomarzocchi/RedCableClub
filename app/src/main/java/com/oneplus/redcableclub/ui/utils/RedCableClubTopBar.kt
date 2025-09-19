@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.oneplus.redcableclub.R
+import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
 
 data class TopBarState(
     val textResource: Int,
@@ -106,10 +107,12 @@ fun RedCableClubTopBar(
 @Preview(showBackground = true)
 @Composable
 fun RedCableClubTopBarPreview() {
-    RedCableClubTopBar(
-        textResource = R.string.app_name,
-        scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    )
+    RedCableClubTheme {
+        RedCableClubTopBar(
+            textResource = R.string.app_name,
+            scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)

@@ -1,6 +1,9 @@
 package com.oneplus.redcableclub.ui.screens
 
+import android.content.res.Configuration
+import androidx.activity.result.launch
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
@@ -11,6 +14,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +25,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Card
@@ -40,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +54,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -59,6 +67,7 @@ import com.oneplus.redcableclub.R
 import com.oneplus.redcableclub.data.model.Benefit
 import com.oneplus.redcableclub.data.model.Product
 import com.oneplus.redcableclub.data.model.ShopItem
+import com.oneplus.redcableclub.data.model.UserProfile
 import com.oneplus.redcableclub.network.RedCableClubApiServiceMock
 import com.oneplus.redcableclub.ui.theme.RedCableClubTheme
 import com.oneplus.redcableclub.ui.utils.FaqItem
@@ -72,6 +81,7 @@ import com.oneplus.redcableclub.ui.utils.RedCoins
 import com.oneplus.redcableclub.ui.utils.ResourceState
 import com.oneplus.redcableclub.ui.utils.SharedElementKeys
 import com.oneplus.redcableclub.ui.utils.shimmerLoadingAnimation
+import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -80,7 +90,7 @@ import java.math.RoundingMode
  * This screen acts as the **source** for the shared element transitions.
  *
  * @param redCoinsShopUiState The state containing the list of shop items.
- * @param redCoins The current number of Red Coins the user has.
+ * @param redCableClubUiState The state containing the redCoins amount.
  * @param sharedTransitionScope The scope from the parent `SharedTransitionLayout`, required to
  * enable shared element transitions. It is passed down to [ProductCard].
  * @param animatedVisibilityScope The scope from the parent `AnimatedContent` (likely a NavHost or a NavDisplay),
@@ -91,19 +101,22 @@ import java.math.RoundingMode
 @Composable
 fun RedCoinsShop(
     redCoinsShopUiState: RedCoinsShopUiState,
-    redCoins: Int,
+    redCableClubUiState: RedCableClubUiState,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onProductClick: (ShopItem, String) -> Unit,
     modifier: Modifier = Modifier,
+    paddingValues: PaddingValues = PaddingValues(0.dp),
 ) {
 
+    val orientation = LocalConfiguration.current.orientation
+    if(orientation == Configuration.ORIENTATION_PORTRAIT)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)),
     ) {
         RedCoinsCard(
-            redCoins = redCoins,
+            redCableClubUiState = redCableClubUiState,
             modifier = Modifier
                 .padding(vertical = dimensionResource(R.dimen.padding_medium))
         )
@@ -115,7 +128,8 @@ fun RedCoinsShop(
                     onProductClick = onProductClick,
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
-                    modifier = modifier
+                    modifier = modifier,
+                    paddingValues = paddingValues
                 )
             }
             is ResourceState.Loading -> {
@@ -123,6 +137,37 @@ fun RedCoinsShop(
             }
             is ResourceState.Error -> {
 
+            }
+        }
+    } else {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_small)),
+            modifier = modifier.padding(horizontal = dimensionResource(R.dimen.padding_medium)),
+        ) {
+            RedCoinsCard(
+                redCableClubUiState = redCableClubUiState,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(vertical = dimensionResource(R.dimen.padding_medium))
+            )
+            when (redCoinsShopUiState.shopItems) {
+                is ResourceState.Success -> {
+
+                    ProductCardGridList(
+                        products = redCoinsShopUiState.shopItems.data,
+                        onProductClick = onProductClick,
+                        sharedTransitionScope = sharedTransitionScope,
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        modifier = Modifier.weight(1f),
+                        paddingValues = paddingValues
+                    )
+                }
+                is ResourceState.Loading -> {
+                    ProductCardGridListLoading(modifier = modifier)
+                }
+                is ResourceState.Error -> {
+
+                }
             }
         }
     }
@@ -142,8 +187,12 @@ fun ProductCardGridList(
     onProductClick: (ShopItem, String) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    paddingValues: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
+
+    val gridState = rememberLazyStaggeredGridState()
+    val coroutineScope = rememberCoroutineScope()
 
    var currentFilter by remember { mutableStateOf(ShopItemFilter.ALL) }
 
@@ -163,16 +212,34 @@ fun ProductCardGridList(
 
         LazyVerticalStaggeredGrid(
             columns = StaggeredGridCells.Adaptive(minSize = 160.dp),
-            modifier = Modifier,
+            state = gridState,
+            modifier = Modifier
 
         ) {
             items(filteredItems.size) { index ->
                 ProductCard(
                     product = filteredItems[index],
-                    onProductClick = onProductClick,
+                    onProductClick = { shopItem, key ->
+                        coroutineScope.launch {
+                            onProductClick(shopItem, key)
+                            gridState.animateScrollToItem(index)
+
+
+                        }
+                    },
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
-                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
+                    modifier = Modifier
+                        .padding(
+                            start =dimensionResource(R.dimen.padding_small),
+                            end = dimensionResource(R.dimen.padding_small),
+                            top = dimensionResource(R.dimen.padding_small),
+                            bottom = dimensionResource(R.dimen.padding_small) +
+                                    if(index == filteredItems.size - 1)
+                                        paddingValues.calculateBottomPadding()
+                                    else 0.dp
+
+                        )
                 )
             }
         }
@@ -253,6 +320,7 @@ fun ProductCardGridListPreview() {
                     products = RedCableClubApiServiceMock.storeProducts,
                     onProductClick = {_,_ -> },
                     sharedTransitionScope = this,
+                    paddingValues = PaddingValues(0.dp),
                     animatedVisibilityScope = animatedVisibilityScope
                 )
             }
@@ -294,7 +362,11 @@ fun ProductCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .sharedElement(
-                                sharedContentState = rememberSharedContentState(key = SharedElementKeys.getImageKey(product.name)),
+                                sharedContentState = rememberSharedContentState(
+                                    key = SharedElementKeys.getImageKey(
+                                        product.name
+                                    )
+                                ),
                                 animatedVisibilityScope = animatedVisibilityScope
                             )
                     )
@@ -304,7 +376,11 @@ fun ProductCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .sharedElement(
-                                sharedContentState = rememberSharedContentState(key = SharedElementKeys.getImageKey(product.name)),
+                                sharedContentState = rememberSharedContentState(
+                                    key = SharedElementKeys.getImageKey(
+                                        product.name
+                                    )
+                                ),
                                 animatedVisibilityScope = animatedVisibilityScope
                             )
                     )
@@ -317,7 +393,11 @@ fun ProductCard(
                         modifier = Modifier
                             .fillMaxWidth() // Give the container a defined size
                             .sharedElement(
-                                rememberSharedContentState(key = SharedElementKeys.getNameKey(product.name)),
+                                rememberSharedContentState(
+                                    key = SharedElementKeys.getNameKey(
+                                        product.name
+                                    )
+                                ),
                                 animatedVisibilityScope = animatedVisibilityScope
                             )
                     ) {
@@ -325,7 +405,6 @@ fun ProductCard(
                             text = product.name,
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                             textAlign = TextAlign.Center,
-                            // The Text itself no longer needs the sharedElement modifier
                         )
                     }
                     Column(
@@ -333,23 +412,25 @@ fun ProductCard(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        RedCoins(product.redCoinsRequired)
+                        RedCoins(
+                            redCoins = product.redCoinsRequired
+                        )
 
                         when (product) {
                             is Product -> {
-                                Text(
-                                    text = " + ", // Added separator
-                                    style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_extra_small)),
-                                    autoSize = TextAutoSize.StepBased(maxFontSize = MaterialTheme.typography.titleMedium.fontSize)
-                                )
-                                Text(
-                                    text = stringResource(R.string.price, product.price),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    autoSize = TextAutoSize.StepBased(maxFontSize = MaterialTheme.typography.titleMedium.fontSize)
-                                )// Matched style for consistency
+                                    Text(
+                                        text = " + ", // Added separator
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.padding(horizontal = dimensionResource(R.dimen.padding_extra_small)),
+                                        autoSize = TextAutoSize.StepBased(maxFontSize = MaterialTheme.typography.titleMedium.fontSize)
+                                    )
 
-                            }
+                                    Text(
+                                        text = stringResource(R.string.price, product.price),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        autoSize = TextAutoSize.StepBased(maxFontSize = MaterialTheme.typography.titleMedium.fontSize)
+                                    )
+                                }
 
                             is Benefit -> Spacer(modifier = Modifier) // No price for benefits
                         }
@@ -517,7 +598,7 @@ fun ProductCardPreview() {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun RedCoinsCard(
-    redCoins: Int,
+    redCableClubUiState: RedCableClubUiState,
     modifier: Modifier = Modifier,
 ) {
 
@@ -544,11 +625,38 @@ fun RedCoinsCard(
                     contentDescription = null,
                     modifier = Modifier.size(MaterialTheme.typography.headlineMedium.fontSize.value.dp)
                 )
-                Text(
-                    text = stringResource(R.string.red_coins, redCoins),
-                    style = MaterialTheme.typography.headlineMedium,
-                    textAlign = TextAlign.Center
-                )
+                val userProfileUiState = redCableClubUiState.userProfileState
+                Crossfade(targetState = userProfileUiState) {state ->
+                    when(state) {
+                        is ResourceState.Success ->
+                            Text(
+                                text = stringResource(R.string.red_coins, state.data.redCoins),
+                                style = MaterialTheme.typography.headlineMedium,
+                                textAlign = TextAlign.Center
+                            )
+                        is ResourceState.Loading ->
+                            Box(modifier = Modifier
+                                .clip(RoundedCornerShape(corner = CornerSize(dimensionResource(R.dimen.padding_small))))
+                                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                                .shimmerLoadingAnimation()) {
+                                Text(
+                                    text = stringResource(R.string.red_coins, 0),
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    color = Color.Transparent,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        is ResourceState.Error ->
+                            Text(
+                                text = stringResource(R.string.network_error),
+                                style = MaterialTheme.typography.headlineMedium,
+                                textAlign = TextAlign.Center
+                            )
+
+
+                    }
+                }
+
             }
             FaqItemViewWithCustomExtension(
                 faqItem = FaqItem(
@@ -966,7 +1074,14 @@ fun NumberIconPreview() {
 @Composable
 fun RedCoinsCardPreview() {
     RedCableClubTheme {
-        Surface { RedCoinsCard(redCoins = 100, modifier = Modifier.padding(16.dp)) }
+        Surface {
+            RedCoinsCard(
+                redCableClubUiState = RedCableClubUiState(
+                    userProfileState = ResourceState.Success(
+                        RedCableClubApiServiceMock.userMock
+                    )
+                ),
+                modifier = Modifier.padding(16.dp)) }
 
 
     }

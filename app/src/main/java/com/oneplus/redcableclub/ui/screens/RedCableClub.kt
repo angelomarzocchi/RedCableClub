@@ -889,7 +889,7 @@ fun BadgesRow(
     modifier: Modifier = Modifier,
     size: Dp = dimensionResource(R.dimen.badge_size),
     ) {
-    Row(horizontalArrangement = Arrangement.SpaceBetween,
+    Row(horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically, modifier = modifier) {
 
 

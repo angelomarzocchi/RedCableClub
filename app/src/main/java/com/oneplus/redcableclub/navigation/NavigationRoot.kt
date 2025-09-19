@@ -17,6 +17,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -27,9 +28,18 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomAppBarState
 import androidx.compose.material3.rememberTopAppBarState
@@ -185,6 +195,7 @@ fun NavigationRoot(
                     )
                 }
             },
+            floatingActionButtonPosition = FabPosition.Center,
             contentWindowInsets = WindowInsets(0,0,0,0)
         ) { innerPadding ->
             Row(
@@ -400,14 +411,13 @@ fun RedCableClubNavDisplay(
                                         showNavigateBack = false
                                     )
                                 )
-                                val userProfile =
-                                    (redCableClubUiState.userProfileState as ResourceState.Success<UserProfile>).data
 
                                 RedCoinsShop(
                                     redCoinsShopUiState = redCoinsShopUiState,
-                                    redCoins = userProfile.redCoins,
+                                    redCableClubUiState = redCableClubUiState,
                                     sharedTransitionScope = this@SharedTransitionLayout,
                                     animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                                    paddingValues = insets.asPaddingValues(),
                                     onProductClick = { shopItem, contentKey ->
                                         backStack.addLast(
                                             RedCoinsProductDetailScreen(
